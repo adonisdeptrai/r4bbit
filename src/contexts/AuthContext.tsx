@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data: userData, error } = await supabase
         .from('users')
         .select('*')
-        .eq('email', supabaseUser.email)
+        .eq('id', supabaseUser.id) // Use ID for better accuracy
         .single();
 
       if (error) {
@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const basicUser: User = {
           id: supabaseUser.id,
           username: supabaseUser.user_metadata?.username || supabaseUser.email?.split('@')[0] || 'User',
-          name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.username || 'User',
+          name: supabaseUser.user_metadata?.username || 'User',
           email: supabaseUser.email || '',
           role: 'user',
           balance: 0
@@ -83,11 +83,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const mappedUser: User = {
         id: userData.id,
         username: userData.username,
-        name: userData.username, // Default to username if no separate name field
+        name: userData.username,
         email: userData.email,
         role: userData.role,
         balance: userData.balance
       };
+
+      // If user is verified in Supabase but not in our state, we could reflect that locally
+      // but the server is the source of truth for the 'role' and 'balance'.
 
       setUser(mappedUser);
       localStorage.setItem('user', JSON.stringify(mappedUser));
@@ -118,47 +121,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const register = async (username: string, email: string, password: string) => {
-    if (!supabase) {
-      throw new Error('Supabase not configured. Please check environment variables.');
-    }
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
     try {
-      // Sign up with Supabase Auth
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username // Store username in user metadata
-          },
-          emailRedirectTo: `${window.location.origin}/verify-email`
-        }
+      // Call backend API to handle registration
+      // Backend uses service role key to bypass RLS and handles Supabase Auth
+      const res = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
       });
 
-      if (signUpError) throw signUpError;
+      const data = await res.json();
 
-      if (authData.user) {
-        // Create user record in public.users table
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert([{
-            id: authData.user.id,
-            username,
-            email,
-            role: 'user',
-            balance: 0,
-            is_verified: false
-          }]);
-
-        if (insertError) {
-          console.error('Error creating user record:', insertError);
-          // Don't throw - user is created in auth.users, just missing profile
-        }
+      if (!res.ok) {
+        throw new Error(data.message || 'Registration failed');
       }
 
-      // IMPORTANT: Return to prevent infinite loading
-      // Supabase will send verification email automatically
-      return { success: true, email: authData.user?.email };
+      // Registration successful - Supabase will send verification email
+      return;
 
     } catch (error: any) {
       console.error('Registration error:', error);

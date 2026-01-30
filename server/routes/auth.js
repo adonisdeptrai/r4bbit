@@ -190,8 +190,9 @@ router.get('/verify-email/:token', async (req, res) => {
 // Get Current User - Using Supabase session
 router.get('/me', auth, async (req, res) => {
     try {
-        // req.user đã được set bởi auth middleware
-        const { data, error } = await supabase
+        // req.user has been set by auth middleware, which verified the Supabase JWT
+        // Get user data from public.users
+        let { data, error } = await supabase
             .from('users')
             .select('id, username, email, role, balance, is_verified')
             .eq('id', req.user.id)
@@ -201,6 +202,23 @@ router.get('/me', auth, async (req, res) => {
 
         if (!data) {
             return res.status(404).json({ message: 'User not found' });
+        }
+
+        // SYNC: Check if Supabase Auth user is verified but public.users isn't
+        const { data: { user: authUser }, error: authError } = await supabase.auth.admin.getUserById(req.user.id);
+
+        if (!authError && authUser && authUser.email_confirmed_at && !data.is_verified) {
+            console.log(`Syncing is_verified for user ${data.email}`);
+            const { data: updatedUser, error: updateError } = await supabase
+                .from('users')
+                .update({ is_verified: true })
+                .eq('id', req.user.id)
+                .select()
+                .single();
+
+            if (!updateError && updatedUser) {
+                data = updatedUser;
+            }
         }
 
         res.json({ user: data });

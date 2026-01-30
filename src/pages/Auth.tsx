@@ -15,8 +15,6 @@ type AuthMode = 'login' | 'register' | 'forgot';
 
 export default function Auth({ onNavigate }: AuthProps) {
     const { login, register, loginWithGoogle, isAuthenticated } = useAuth();
-    const [verificationCode, setVerificationCode] = useState('');
-    const [isVerifying, setIsVerifying] = useState(false);
 
     // Missing State Variables
     const [mode, setMode] = useState<AuthMode>('login');
@@ -41,37 +39,8 @@ export default function Auth({ onNavigate }: AuthProps) {
         setError(null);
         setSuccess(null);
         setResetSent(false);
-        setIsVerifying(false);
-        setVerificationCode('');
     }, [mode]);
 
-    const handleVerify = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError(null);
-        setSuccess(null);
-        setIsLoading(true);
-
-        try {
-            const res = await fetch(API_ENDPOINTS.AUTH_VERIFY, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, code: verificationCode })
-            });
-            const data = await res.json();
-
-            if (res.ok) {
-                setSuccess("Account verified! Logging in...");
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                // Automatically login after verification
-                await login(username, password);
-            } else {
-                setError(data.message || "Verification failed");
-            }
-        } catch (err) {
-            setError("Server connection failed");
-        }
-        setIsLoading(false);
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -124,8 +93,7 @@ export default function Auth({ onNavigate }: AuthProps) {
                 await login(email, password); // Supabase requires email
             } else if (mode === 'register') {
                 await register(username, email, password);
-                setIsVerifying(true);
-                setSuccess('Registration successful! Please check your email to verify your account.');
+                setSuccess('Registration successful! Please check your email and click the confirmation link to activate your account.');
             }
         } catch (err: any) {
             setError(err.message || "Authentication failed");
@@ -164,22 +132,20 @@ export default function Auth({ onNavigate }: AuthProps) {
                             <Sparkles className="text-white" size={24} />
                         </div>
                         <h1 className="text-3xl font-bold tracking-tight mb-2">
-                            {isVerifying ? 'Verify Account' : (
-                                mode === 'login' ? 'Welcome Back' :
-                                    mode === 'register' ? 'Join the Revolution' : 'Reset Password'
-                            )}
+                            {mode === 'login' ? 'Welcome Back' :
+                                mode === 'register' ? 'Join the Revolution' : 'Reset Password'
+                            }
                         </h1>
                         <p className="text-slate-400 text-sm">
-                            {isVerifying ? `Enter the code sent to ${email}` : (
-                                mode === 'login' ? 'Enter your credentials to access your dashboard.' :
-                                    mode === 'register' ? 'Start building your automated empire today.' :
-                                        'Enter your email to receive a reset link.'
-                            )}
+                            {mode === 'login' ? 'Enter your credentials to access your dashboard.' :
+                                mode === 'register' ? 'Start building your automated empire today.' :
+                                    'Enter your email to receive a reset link.'
+                            }
                         </p>
                     </div>
 
                     {/* Google Auth Button */}
-                    {mode !== 'forgot' && !isVerifying && (
+                    {mode !== 'forgot' && (
                         <div className="mb-6 relative z-10">
                             <button
                                 type="button"
@@ -207,7 +173,7 @@ export default function Auth({ onNavigate }: AuthProps) {
                         </div>
                     )}
 
-                    {!resetSent && !isVerifying ? (
+                    {!resetSent ? (
                         <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
                             <AnimatePresence mode='wait'>
                                 {error && (
@@ -332,55 +298,6 @@ export default function Auth({ onNavigate }: AuthProps) {
                                     mode === 'login' ? 'Sign In' : mode === 'register' ? 'Create Account' : 'Send Reset Link'
                                 )}
                             </Button>
-                        </form>
-                    ) : isVerifying ? (
-                        <form onSubmit={handleVerify} className="space-y-4 relative z-10">
-                            <AnimatePresence mode='wait'>
-                                {error && (
-                                    <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="bg-red-500/10 border border-red-500/20 text-red-200 text-xs font-medium px-4 py-3 rounded-xl flex items-center gap-2 overflow-hidden"
-                                    >
-                                        <AlertCircle size={14} className="shrink-0" /> {error}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-slate-400 ml-1">Verification Code</label>
-                                <div className="relative group">
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-brand-cyan transition-colors font-mono tracking-widest text-lg">#</div>
-                                    <input
-                                        type="text"
-                                        value={verificationCode}
-                                        onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                        className="w-full pl-11 pr-4 py-3.5 bg-[#0a0e17] border border-white/5 rounded-xl text-lg tracking-[0.5em] font-mono text-center focus:outline-none focus:border-brand-cyan/50 focus:bg-[#0a0e17] transition-all placeholder:text-slate-700 text-brand-cyan disabled:opacity-50 disabled:cursor-not-allowed"
-                                        placeholder="000000"
-                                        maxLength={6}
-                                        autoFocus
-                                    />
-                                </div>
-                            </div>
-
-                            <Button
-                                type="submit"
-                                disabled={isLoading || verificationCode.length !== 6}
-                                className="w-full h-12 bg-gradient-to-r from-brand-cyan to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl font-bold shadow-lg shadow-brand-cyan/20 transition-all mt-6 border-none"
-                            >
-                                {isLoading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Verify Code'}
-                            </Button>
-
-                            <div className="text-center mt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setMode('login')}
-                                    className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
-                                >
-                                    Cancel & Return to Login
-                                </button>
-                            </div>
                         </form>
                     ) : (
                         <div className="text-center py-8 relative z-10">
