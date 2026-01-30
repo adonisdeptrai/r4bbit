@@ -13,7 +13,7 @@ interface AuthProps {
 type AuthMode = 'login' | 'register' | 'forgot';
 
 export default function Auth({ onNavigate }: AuthProps) {
-    const { login, register, isAuthenticated } = useAuth();
+    const { login, register, loginWithGoogle, isAuthenticated } = useAuth();
     const [verificationCode, setVerificationCode] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
 
@@ -178,10 +178,21 @@ export default function Auth({ onNavigate }: AuthProps) {
                         </p>
                     </div>
 
-                    {/* Google Auth Button (Visual Only) */}
+                    {/* Google Auth Button */}
                     {mode !== 'forgot' && !isVerifying && (
                         <div className="mb-6 relative z-10">
-                            <button className="w-full h-12 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl flex items-center justify-center gap-3 transition-all font-medium text-sm text-slate-200 group">
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    try {
+                                        await loginWithGoogle();
+                                    } catch (err: any) {
+                                        setError(err.message || 'Google login failed');
+                                    }
+                                }}
+                                disabled={isLoading}
+                                className="w-full h-12 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl flex items-center justify-center gap-3 transition-all font-medium text-sm text-slate-200 group disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
                                 <Chrome size={18} className="text-slate-400 group-hover:text-white transition-colors" />
                                 <span>Sign in with Google</span>
                             </button>

@@ -42,7 +42,7 @@ app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
 // Initialize Supabase Connection
-const supabase = require('./config/supabase');
+const { supabase } = require('./config/supabase');
 console.log('Supabase client initialized');
 
 const { startWorker: startTPBankWorker } = require('./workers/tpbankWorker');
@@ -74,6 +74,7 @@ const orderRoutes = require('./routes/orders');
 const statsRoutes = require('./routes/stats');
 
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', require('./routes/oauth')); // Google OAuth routes
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/settings', require('./routes/settings'));

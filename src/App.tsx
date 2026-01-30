@@ -4,6 +4,7 @@ import Landing from './pages/LandingPage';
 import Shop from './pages/Shop';
 import Checkout from './pages/Checkout';
 import Auth from './pages/Auth';
+import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import AddProduct from './pages/Admin/AddProduct';
 import VerifyEmail from './pages/VerifyEmail';
@@ -131,8 +132,8 @@ function AppContent() {
         } />
 
         <Route path="/verify-email" element={<VerifyEmail onNavigate={handleNavigate} />} />
-
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/auth/callback" element={<AuthCallback onNavigate={handleNavigate} />} />
       </Route>
 
       {/* Fallback */}

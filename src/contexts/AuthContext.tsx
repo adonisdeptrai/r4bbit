@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { User } from '../types';
+import { supabase } from '../config/supabase';
 
 interface AuthContextType {
   user: User | null;
   login: (username: string, password?: string) => Promise<void>;
   register: (username: string, email?: string, password?: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -69,14 +71,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      // Supabase will redirect to Google
+      // After auth, user will be redirected to /auth/callback
+    } catch (error) {
+      console.error('Google login error:', error);
+      throw error;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+    // Also sign out from Supabase
+    supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, register, loginWithGoogle, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,4 +1,4 @@
-const supabase = require('../config/supabase');
+const { supabase } = require('../config/supabase');
 const tpbankClient = require('../utils/tpbank');
 
 const CHECK_INTERVAL = 60 * 1000; // 60 seconds

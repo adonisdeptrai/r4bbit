@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../config/supabase');
+const { supabase } = require('../config/supabase');
 const auth = require('../middleware/auth');
 const { decrypt, isEncrypted } = require('../utils/encryption');
 const binancePay = require('../utils/binancePay');

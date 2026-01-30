@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../config/supabase');
+const { supabase } = require('../config/supabase');
 const { encrypt, decrypt, isEncrypted } = require('../utils/encryption');
 const tpbankClient = require('../utils/tpbank');
 const binanceClient = require('../utils/binance');
