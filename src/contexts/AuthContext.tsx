@@ -152,10 +152,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (insertError) {
           console.error('Error creating user record:', insertError);
+          // Don't throw - user is created in auth.users, just missing profile
         }
       }
 
+      // IMPORTANT: Return to prevent infinite loading
       // Supabase will send verification email automatically
+      return { success: true, email: authData.user?.email };
+
     } catch (error: any) {
       console.error('Registration error:', error);
       throw new Error(error.message || 'Registration failed');
