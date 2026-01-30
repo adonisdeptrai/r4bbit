@@ -1,132 +1,226 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { supabase } from '../config/supabase';
+import { Check, Mail, Loader2, AlertCircle, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { Button, cn } from '../components/common';
-import { AnimatedBackground } from '../components/landing/AnimatedBackground';
-import { ViewState } from '../types';
 
-interface VerifyEmailProps {
-    onNavigate?: (view: ViewState) => void;
-}
-
-export default function VerifyEmail({ onNavigate }: VerifyEmailProps) {
-    const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+export default function VerifyEmail() {
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const [status, setStatus] = useState<'checking' | 'success' | 'error' | 'resend'>('checking');
     const [message, setMessage] = useState('Verifying your email...');
-
-    // Use native URLSearchParams since we interpret routing manually
-    const query = new URLSearchParams(window.location.search);
-    const token = query.get('token');
+    const [email, setEmail] = useState('');
+    const [resending, setResending] = useState(false);
 
     useEffect(() => {
-        if (!token) {
-            setStatus('error');
-            setMessage('Invalid verification link.');
-            return;
-        }
+        // Auto-verify if token is in URL (email link flow)
+        const token = searchParams.get('token');
+        const type = searchParams.get('type');
 
-        const verify = async () => {
-            try {
-                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                const res = await fetch(`${API_URL}/api/auth/verify-email/${token}`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const data = await res.json();
-
-                if (res.ok) {
-                    setStatus('success');
-                    setMessage(data.message || 'Email verified successfully!');
-                } else {
-                    setStatus('error');
-                    setMessage(data.message || 'Verification failed.');
-                }
-            } catch (err) {
-                console.error('Verification Error:', err);
-                setStatus('error');
-                setMessage('Server error. Please try again later.');
-            }
-        };
-
-        verify();
-    }, [token]);
-
-    const handleLoginRedirect = () => {
-        if (onNavigate) {
-            onNavigate('auth');
+        if (token && type === 'signup') {
+            verifyEmailToken(token);
         } else {
-            // Fallback if prop not passed
-            window.location.href = '/auth';
+            // Manual verification flow - check if user just signed up
+            checkVerificationStatus();
+        }
+    }, [searchParams]);
+
+    const verifyEmailToken = async (token: string) => {
+        try {
+            if (!supabase) {
+                setStatus('error');
+                setMessage('Email service not configured');
+                return;
+            }
+
+            // Verify email with Supabase token from URL
+            const { data, error } = await supabase.auth.verifyOtp({
+                token_hash: token,
+                type: 'signup'
+            });
+
+            if (error) throw error;
+
+            if (data.user) {
+                // Update public.users is_verified status
+                await supabase
+                    .from('users')
+                    .update({ is_verified: true })
+                    .eq('id', data.user.id);
+
+                setStatus('success');
+                setMessage('Email verified successfully! Redirecting to login...');
+
+                // Redirect to login after 3 seconds
+                setTimeout(() => navigate('/auth'), 3000);
+            }
+        } catch (err: any) {
+            console.error('Verification Error:', err);
+            setStatus('error');
+            setMessage(err.message || 'Verification failed. Link may be expired.');
         }
     };
 
+    const checkVerificationStatus = async () => {
+        try {
+            if (!supabase) {
+                setStatus('resend');
+                setMessage('Please check your email for verification link');
+                return;
+            }
+
+            // Get current session
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (session?.user) {
+                setEmail(session.user.email || '');
+
+                if (session.user.email_confirmed_at) {
+                    setStatus('success');
+                    setMessage('Email already verified!');
+                    setTimeout(() => navigate('/shop'), 2000);
+                } else {
+                    setStatus('resend');
+                    setMessage('Please check your email for verification link');
+                }
+            } else {
+                setStatus('resend');
+                setMessage('Please check your email to verify your account');
+            }
+        } catch (err) {
+            setStatus('resend');
+            setMessage('Please check your email for verification link');
+        }
+    };
+
+    const resendVerificationEmail = async () => {
+        if (!email) {
+            setMessage('Email address not found. Please sign up again.');
+            return;
+        }
+
+        setResending(true);
+        try {
+            if (!supabase) throw new Error('Email service not configured');
+
+            const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email: email
+            });
+
+            if (error) throw error;
+
+            setMessage('Verification email sent! Please check your inbox.');
+            setStatus('resend');
+        } catch (err: any) {
+            console.error('Resend error:', err);
+            setMessage(err.message || 'Failed to resend email');
+            setStatus('error');
+        }
+        setResending(false);
+    };
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#020617] relative overflow-hidden font-sans text-white selection:bg-brand-cyan/30">
-            <AnimatedBackground />
-
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4">
             <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className="w-full max-w-md mx-4 relative z-10"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-md w-full"
             >
-                <div className="relative backdrop-blur-3xl bg-[#0F1420]/60 rounded-[32px] border border-white/10 p-10 text-center shadow-2xl shadow-black/50 overflow-hidden group">
-
-                    {/* Ambient Glow */}
-                    <div className="absolute -top-20 -right-20 w-60 h-60 bg-brand-cyan/10 rounded-full blur-[80px] group-hover:bg-brand-cyan/15 transition-all duration-1000"></div>
-                    <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-blue-600/10 rounded-full blur-[80px] group-hover:bg-blue-600/15 transition-all duration-1000"></div>
-
-                    <div className="relative z-10 flex flex-col items-center">
-                        {status === 'loading' && (
-                            <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 shadow-lg relative overflow-hidden">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-brand-cyan/20 to-transparent opacity-50 animate-pulse"></div>
-                                <Loader2 size={40} className="text-brand-cyan animate-spin drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
+                <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
+                    {/* Icon */}
+                    <div className="flex justify-center mb-6">
+                        {status === 'checking' && (
+                            <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
                             </div>
+                        )}
+                        {status === 'success' && (
+                            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
+                                <Check className="w-8 h-8 text-green-400" />
+                            </div>
+                        )}
+                        {status === 'error' && (
+                            <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+                                <AlertCircle className="w-8 h-8 text-red-400" />
+                            </div>
+                        )}
+                        {status === 'resend' && (
+                            <div className="w-16 h-16 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                                <Mail className="w-8 h-8 text-cyan-400" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Title */}
+                    <h2 className="text-2xl font-bold text-center text-white mb-4">
+                        {status === 'checking' && 'Verifying Email'}
+                        {status === 'success' && 'Email Verified!'}
+                        {status === 'error' && 'Verification Failed'}
+                        {status === 'resend' && 'Check Your Email'}
+                    </h2>
+
+                    {/* Message */}
+                    <p className="text-center text-slate-300 mb-6">
+                        {message}
+                    </p>
+
+                    {/* Email Display */}
+                    {email && status === 'resend' && (
+                        <div className="bg-white/5 border border-white/10 rounded-lg p-3 mb-6 text-center">
+                            <p className="text-sm text-slate-400">Sent to:</p>
+                            <p className="text-white font-medium">{email}</p>
+                        </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="space-y-3">
+                        {status === 'resend' && (
+                            <button
+                                onClick={resendVerificationEmail}
+                                disabled={resending}
+                                className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold py-3 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {resending ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        Sending...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Mail className="w-5 h-5" />
+                                        Resend Verification Email
+                                    </>
+                                )}
+                            </button>
                         )}
 
                         {status === 'success' && (
-                            <motion.div
-                                initial={{ scale: 0, rotate: -45 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                type="spring"
-                                className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-emerald-500/20 to-green-500/20 border border-emerald-500/30 flex items-center justify-center mb-6 shadow-[0_0_30px_-5px_rgba(16,185,129,0.3)]"
+                            <button
+                                onClick={() => navigate('/shop')}
+                                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-2"
                             >
-                                <CheckCircle size={40} className="text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                            </motion.div>
+                                Continue to App
+                                <ArrowRight className="w-5 h-5" />
+                            </button>
                         )}
 
-                        {status === 'error' && (
-                            <motion.div
-                                initial={{ scale: 0, rotate: 45 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                type="spring"
-                                className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-red-500/20 to-orange-500/20 border border-red-500/30 flex items-center justify-center mb-6 shadow-[0_0_30px_-5px_rgba(239,68,68,0.3)]"
+                        {(status === 'resend' || status === 'error') && (
+                            <button
+                                onClick={() => navigate('/auth')}
+                                className="w-full bg-white/5 hover:bg-white/10 border border-white/20 text-white font-semibold py-3 px-6 rounded-lg transition-all"
                             >
-                                <XCircle size={40} className="text-red-400 drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-                            </motion.div>
+                                Back to Login
+                            </button>
                         )}
-
-                        <h2 className="text-3xl font-bold mb-3 tracking-tight">
-                            {status === 'loading' && 'Verifying...'}
-                            {status === 'success' && 'Verified!'}
-                            {status === 'error' && 'Verification Failed'}
-                        </h2>
-
-                        <p className="text-slate-400 mb-10 leading-relaxed">
-                            {message}
-                        </p>
-
-                        <Button
-                            onClick={handleLoginRedirect}
-                            className={cn(
-                                "w-full h-12 rounded-xl border transition-all duration-300 font-semibold shadow-lg",
-                                status === 'success'
-                                    ? "bg-gradient-to-r from-brand-cyan to-blue-600 border-transparent hover:shadow-brand-cyan/25 text-white"
-                                    : "bg-white/5 border-white/10 hover:bg-white/10 text-white hover:border-white/20"
-                            )}
-                        >
-                            {status === 'success' ? 'Continue to Login' : 'Return to Login'}
-                        </Button>
                     </div>
+
+                    {/* Help Text */}
+                    {status === 'resend' && (
+                        <p className="text-center text-sm text-slate-400 mt-6">
+                            Didn't receive the email? Check your spam folder or click resend.
+                        </p>
+                    )}
                 </div>
             </motion.div>
         </div>
