@@ -121,11 +121,11 @@ export default function Auth({ onNavigate }: AuthProps) {
 
         try {
             if (mode === 'login') {
-                await login(username, password);
+                await login(email, password); // Supabase requires email
             } else if (mode === 'register') {
                 await register(username, email, password);
                 setIsVerifying(true);
-                setSuccess(null);
+                setSuccess('Registration successful! Please check your email to verify your account.');
             }
         } catch (err: any) {
             setError(err.message || "Authentication failed");
@@ -253,17 +253,19 @@ export default function Auth({ onNavigate }: AuthProps) {
                             {mode !== 'forgot' && (
                                 <>
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-slate-400 ml-1">Username</label>
+                                        <label className="text-xs font-bold text-slate-400 ml-1">
+                                            {mode === 'login' ? 'Email' : 'Username'}
+                                        </label>
                                         <div className="relative group">
                                             <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-brand-cyan transition-colors" size={18} />
                                             <input
-                                                type="text"
-                                                value={username}
+                                                type={mode === 'login' ? 'email' : 'text'}
+                                                value={mode === 'login' ? email : username}
                                                 autoFocus
                                                 disabled={isLoading}
-                                                onChange={(e) => setUsername(e.target.value)}
+                                                onChange={(e) => mode === 'login' ? setEmail(e.target.value) : setUsername(e.target.value)}
                                                 className="w-full pl-11 pr-4 py-3.5 bg-[#0a0e17] border border-white/5 rounded-xl text-sm focus:outline-none focus:border-brand-cyan/50 focus:bg-[#0a0e17] transition-all placeholder:text-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                placeholder="Enter username"
+                                                placeholder={mode === 'login' ? 'your@email.com' : 'Enter username'}
                                             />
                                         </div>
                                     </div>

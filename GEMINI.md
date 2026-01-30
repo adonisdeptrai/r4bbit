@@ -33,4 +33,5 @@ Model Lock: Sử dụng duy nhất Gemini 3 Pro High. Không tự ý chuyển đ
 
 Scope: Không tự vẽ thêm tính năng ngoài yêu cầu. Không đề xuất giải pháp thay thế trừ khi được hỏi.
 
-Docker Requirement: Mọi sản phẩm cuối cùng phải chạy được trong môi trường Container. Đảm bảo cấu hình .env và volumes chuẩn xác.
+push code lên github moi khi hoàn thành task
+Link github: https://github.com/adonisdeptrai/r4bbit.git
