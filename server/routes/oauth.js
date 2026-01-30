@@ -1,149 +1,52 @@
 /**
- * Google OAuth Callback Route
- * Handles authentication callback from Supabase OAuth flow
+ * OAuth Routes - Simplified for Supabase Auth
  * 
- * SETUP GUIDE:
- * 1. Go to Supabase Dashboard → Authentication → Providers → Google
- * 2. Enable Google provider
- * 3. Add Google OAuth credentials from Google Cloud Console
- * 4. Set Redirect URL to: <CLIENT_URL>/auth/callback
+ * Migration Note: OAuth now handled entirely by Supabase
+ * Frontend calls Supabase directly, no backend callback needed
+ * This file kept for legacy compatibility only
  */
 
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
-const { supabase, supabaseAnonClient } = require('../config/supabase');
-
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-    throw new Error('FATAL: JWT_SECRET is not defined.');
-}
+const { supabase } = require('../config/supabase');
 
 /**
- * POST /api/auth/google/callback
- * Verify Supabase session and sync user data to database
+ * POST /api/auth/oauth/callback
+ * DEPRECATED: Frontend should handle OAuth callback directly with Supabase
+ * Kept for backward compatibility
  */
-router.post('/google/callback', async (req, res) => {
+router.post('/callback', async (req, res) => {
     try {
-        const { access_token, refresh_token } = req.body;
+        const { user_id } = req.body;
 
-        if (!access_token) {
-            return res.status(400).json({ message: 'Access token is required' });
+        if (!user_id) {
+            return res.status(400).json({ message: 'User ID required' });
         }
 
-        // Verify session with Supabase using anon client
-        if (!supabaseAnonClient) {
-            return res.status(500).json({ message: 'Supabase anon client not configured' });
-        }
-
-        const { data: { user: supabaseUser }, error: authError } = await supabaseAnonClient.auth.getUser(access_token);
-
-        if (authError || !supabaseUser) {
-            console.error('Supabase auth error:', authError);
-            return res.status(401).json({ message: 'Invalid session token' });
-        }
-
-        // Extract user data from Google
-        const email = supabaseUser.email;
-        const username = supabaseUser.user_metadata?.full_name || email.split('@')[0];
-        const googleId = supabaseUser.id;
-
-        // Check if user already exists
-        const { data: existingUser } = await supabase
+        // Fetch user data from public.users table
+        const { data: userData, error } = await supabase
             .from('users')
             .select('*')
-            .eq('email', email)
+            .eq('id', user_id)
             .single();
 
-        let user;
-
-        if (existingUser) {
-            // Update existing user
-            const { data: updatedUser, error: updateError } = await supabase
-                .from('users')
-                .update({
-                    google_id: googleId,
-                    is_verified: true, // Auto-verify OAuth users
-                    last_login: new Date().toISOString()
-                })
-                .eq('email', email)
-                .select()
-                .single();
-
-            if (updateError) throw updateError;
-            user = updatedUser;
-        } else {
-            // Create new user
-            const { data: newUser, error: createError } = await supabase
-                .from('users')
-                .insert([{
-                    username,
-                    email,
-                    google_id: googleId,
-                    is_verified: true, // Auto-verify OAuth users
-                    password: null, // No password for OAuth users
-                    role: 'user',
-                    balance: 0,
-                    last_login: new Date().toISOString()
-                }])
-                .select()
-                .single();
-
-            if (createError) throw createError;
-            user = newUser;
+        if (error || !userData) {
+            return res.status(404).json({ message: 'User not found' });
         }
-
-        // Generate JWT token for session management
-        const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
         res.json({
             success: true,
-            token,
             user: {
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-                balance: user.balance
-            }
-        });
-    } catch (err) {
-        console.error('Google OAuth callback error:', err);
-        res.status(500).json({ message: 'Server error', error: err.message });
-    }
-});
-
-/**
- * GET /api/auth/google/url
- * Get Supabase OAuth URL for Google sign-in
- */
-router.get('/google/url', async (req, res) => {
-    try {
-        if (!supabaseAnonClient) {
-            return res.status(500).json({ message: 'Supabase anon client not configured' });
-        }
-
-        const redirectTo = process.env.CLIENT_URL || 'http://localhost:8080';
-
-        const { data, error } = await supabaseAnonClient.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: `${redirectTo}/auth/callback`,
-                queryParams: {
-                    access_type: 'offline',
-                    prompt: 'consent',
-                }
+                id: userData.id,
+                username: userData.username,
+                email: userData.email,
+                role: userData.role,
+                balance: userData.balance
             }
         });
 
-        if (error) throw error;
-
-        res.json({
-            success: true,
-            url: data.url
-        });
     } catch (err) {
-        console.error('Get Google OAuth URL error:', err);
+        console.error('OAuth callback error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
     }
 });
