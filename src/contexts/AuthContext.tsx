@@ -126,6 +126,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
+      // Check if username already exists in public.users before signing up
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking existing user:', checkError);
+      }
+
+      if (existingUser) {
+        throw new Error('Username already exists. Please choose another one.');
+      }
+
       // Sign up directly with Supabase Client
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -133,7 +148,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         options: {
           data: {
             username
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/verify-email`
         }
       });
 

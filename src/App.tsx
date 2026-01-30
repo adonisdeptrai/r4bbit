@@ -132,7 +132,7 @@ function AppContent() {
           </AdminRoute>
         } />
 
-        <Route path="/verify-email" element={<VerifyEmail onNavigate={handleNavigate} />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth/callback" element={<AuthCallback onNavigate={handleNavigate} />} />
       </Route>

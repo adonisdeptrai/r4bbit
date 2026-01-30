@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Lock, User, ArrowLeft, Mail, AlertCircle, Chrome, Sparkles, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { Button, cn } from '../components/common';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,6 +17,7 @@ type AuthMode = 'login' | 'register' | 'forgot';
 
 export default function Auth({ onNavigate }: AuthProps) {
     const { login, register, loginWithGoogle, isAuthenticated } = useAuth();
+    const navigate = useNavigate();
 
     // Missing State Variables
     const [mode, setMode] = useState<AuthMode>('login');
@@ -90,7 +92,8 @@ export default function Auth({ onNavigate }: AuthProps) {
                 await login(email, password); // Supabase requires email
             } else if (mode === 'register') {
                 await register(username, email, password);
-                setSuccess('Registration successful! Please check your email and click the confirmation link to activate your account.');
+                navigate(`/verify-email?email=${encodeURIComponent(email)}`);
+                return;
             }
         } catch (err: any) {
             setError(err.message || "Authentication failed");
