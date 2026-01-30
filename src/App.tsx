@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import Landing from './pages/LandingPage';
 import Shop from './pages/Shop';
 import Checkout from './pages/Checkout';
@@ -151,6 +152,7 @@ export default function App() {
         <AuthProvider>
           <CartProvider>
             <AppContent />
+            <Analytics />
           </CartProvider>
         </AuthProvider>
       </ToastProvider>
