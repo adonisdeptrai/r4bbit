@@ -21,6 +21,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Sync Supabase session with React state
   useEffect(() => {
+    // Skip if Supabase not configured
+    if (!supabase) {
+      console.warn('Supabase not configured, skipping auth sync');
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -91,6 +98,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const login = async (email: string, password: string) => {
+    if (!supabase) {
+      throw new Error('Supabase not configured. Please check environment variables.');
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -107,6 +118,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const register = async (username: string, email: string, password: string) => {
+    if (!supabase) {
+      throw new Error('Supabase not configured. Please check environment variables.');
+    }
+
     try {
       // Sign up with Supabase Auth
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -148,6 +163,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const loginWithGoogle = async () => {
+    if (!supabase) {
+      throw new Error('Supabase not configured. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local');
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
