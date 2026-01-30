@@ -121,26 +121,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const register = async (username: string, email: string, password: string) => {
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    if (!supabase) {
+      throw new Error('Supabase not configured. Please check environment variables.');
+    }
 
     try {
-      // Call backend API to handle registration
-      // Backend uses service role key to bypass RLS and handles Supabase Auth
-      const res = await fetch(`${API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
+      // Sign up directly with Supabase Client
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username
+          }
+        }
       });
 
-      const data = await res.json();
+      if (error) throw error;
 
-      if (!res.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      // Registration successful - Supabase will send verification email
+      // Note: The public.users record will be created automatically by the Postgres trigger
+      // after the user confirms their email.
       return;
-
     } catch (error: any) {
       console.error('Registration error:', error);
       throw new Error(error.message || 'Registration failed');

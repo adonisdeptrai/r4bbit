@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ViewState } from '../types';
 import { AnimatedBackground } from '../components/landing/AnimatedBackground';
 import { API_ENDPOINTS } from '../config/api';
+import { supabase } from '../config/supabase';
 
 interface AuthProps {
     onNavigate: (view: ViewState) => void;
@@ -55,21 +56,18 @@ export default function Auth({ onNavigate }: AuthProps) {
 
             setIsLoading(true);
             try {
-                const res = await fetch(API_ENDPOINTS.AUTH_FORGOT_PASSWORD, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/reset-password`,
                 });
-                const data = await res.json();
 
-                if (res.ok) {
+                if (!error) {
                     setResetSent(true);
-                    setSuccess(data.message);
+                    setSuccess("If an account exists with this email, you will receive a password reset link.");
                 } else {
-                    setError(data.message || 'Failed to send reset email');
+                    setError(error.message || 'Failed to send reset email');
                 }
-            } catch (err) {
-                setError('Server connection failed');
+            } catch (err: any) {
+                setError(err.message || 'Server connection failed');
             }
             setIsLoading(false);
             return;
@@ -86,7 +84,6 @@ export default function Auth({ onNavigate }: AuthProps) {
         }
 
         setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 800));
 
         try {
             if (mode === 'login') {

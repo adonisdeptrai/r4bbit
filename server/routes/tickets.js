@@ -3,9 +3,7 @@ const router = express.Router();
 const { supabase } = require('../config/supabase');
 const auth = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
-const nod
-
-emailer = require('nodemailer');
+const nodemailer = require('nodemailer');
 
 // Helper function to send email notifications
 async function sendTicketEmail(to, subject, htmlContent) {
