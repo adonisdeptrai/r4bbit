@@ -5,6 +5,7 @@ import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { cn } from '../common';
 import { Order } from '../../types';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface PaymentVerificationViewProps {
     orders?: Order[];
@@ -31,7 +32,7 @@ const PaymentVerificationView = ({ orders = [], history = [] }: PaymentVerificat
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/orders/pending', {
+            const res = await fetch(API_ENDPOINTS.ORDERS_PENDING, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -247,7 +248,7 @@ const ComparisonModal = ({ order, onClose, onVerified }: { order: PendingOrder, 
         setSubmitting(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`http://localhost:5000/api/orders/${order.orderId || order.id}/manual-verify`, {
+            const res = await fetch(API_ENDPOINTS.ORDER_MANUAL_VERIFY(order.orderId || order.id), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

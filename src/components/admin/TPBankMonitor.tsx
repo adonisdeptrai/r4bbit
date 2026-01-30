@@ -6,6 +6,7 @@ import { Button } from '../common/Button';
 import { cn } from '../common';
 import { Order } from '../../types';
 import PaymentVerificationView from './PaymentVerificationView';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface TPBankMonitorProps {
     orders?: Order[];
@@ -21,7 +22,7 @@ const TPBankMonitor = ({ orders = [] }: TPBankMonitorProps) => {
 
     const fetchSettings = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/settings');
+            const res = await fetch(API_ENDPOINTS.SETTINGS);
             const data = await res.json();
             setSettings(data);
         } catch (err) {
@@ -33,7 +34,7 @@ const TPBankMonitor = ({ orders = [] }: TPBankMonitorProps) => {
         setLoadingLogs(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/settings/tpbank-logs', {
+            const res = await fetch(API_ENDPOINTS.SETTINGS_TPBANK_LOGS, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -49,7 +50,7 @@ const TPBankMonitor = ({ orders = [] }: TPBankMonitorProps) => {
         setLoadingHistory(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/settings/tpbank-history', {
+            const res = await fetch(API_ENDPOINTS.SETTINGS_TPBANK_HISTORY, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -74,7 +75,7 @@ const TPBankMonitor = ({ orders = [] }: TPBankMonitorProps) => {
 
         try {
             const token = localStorage.getItem('token');
-            await fetch('http://localhost:5000/api/settings', {
+            await fetch(API_ENDPOINTS.SETTINGS, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

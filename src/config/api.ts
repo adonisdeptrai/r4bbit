@@ -9,7 +9,7 @@ export const API_ENDPOINTS = {
     AUTH_VERIFY: `${API_BASE_URL}/api/auth/verify`,
     AUTH_VERIFY_EMAIL: `${API_BASE_URL}/api/auth/verify-email`,
     AUTH_FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgot-password`,
-    AUTH_RESET_PASSWORD: `${API_BASE_URL}/api/auth/reset-password`,
+    AUTH_RESET_PASSWORD: (token: string) => `${API_BASE_URL}/api/auth/reset-password/${token}`,
     AUTH_VERIFY_PAYMENT: `${API_BASE_URL}/api/auth/verify-payment`,
 
     // Products

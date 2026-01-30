@@ -5,6 +5,7 @@ import { Button, cn } from '../components/common';
 import { useAuth } from '../contexts/AuthContext';
 import { ViewState } from '../types';
 import { AnimatedBackground } from '../components/landing/AnimatedBackground';
+import { API_ENDPOINTS } from '../config/api';
 
 interface AuthProps {
     onNavigate: (view: ViewState) => void;
@@ -51,7 +52,7 @@ export default function Auth({ onNavigate }: AuthProps) {
         setIsLoading(true);
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/verify', {
+            const res = await fetch(API_ENDPOINTS.AUTH_VERIFY, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, code: verificationCode })
@@ -85,8 +86,7 @@ export default function Auth({ onNavigate }: AuthProps) {
 
             setIsLoading(true);
             try {
-                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+                const res = await fetch(API_ENDPOINTS.AUTH_FORGOT_PASSWORD, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })

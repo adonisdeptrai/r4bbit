@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, Plus, X, ChevronDown, Check, Loader2 } from 'lucide-react';
 import { Button } from '../../components/common'; // Assuming we have this
+import { API_ENDPOINTS } from '../../config/api';
 // If we don't have a reusable Input/Select, I'll style them directly or create local ones.
 
 const AddProduct = () => {
@@ -64,7 +65,7 @@ const AddProduct = () => {
         }
 
         try {
-            const response = await fetch('http://localhost:5000/api/products', {
+            const response = await fetch(API_ENDPOINTS.PRODUCTS, {
                 method: 'POST',
                 body: data
             });

@@ -7,12 +7,12 @@ import {
     Sparkles, Zap, ArrowRight, CheckCircle, Info, LayoutGrid, List, Menu, Code
 } from 'lucide-react';
 import { Button, Badge, cn } from '../components/common';
-// import { PRODUCTS } from '../utils/constants';
 import { ViewState, ProductType, Product } from '../types';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { UserMenu } from '../components/layout/UserMenu';
 import { AnimatedBackground } from '../components/landing/AnimatedBackground';
+import { API_ENDPOINTS } from '../config/api';
 
 // --- Constants ---
 const CATEGORIES = ['ALL', ...Object.values(ProductType)];
@@ -489,7 +489,7 @@ export default function Shop({ onNavigate }: { onNavigate: (view: ViewState) => 
     React.useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const res = await fetch('http://localhost:5000/api/products');
+                const res = await fetch(API_ENDPOINTS.PRODUCTS);
                 if (res.ok) {
                     const data = await res.json();
                     setProducts(data);

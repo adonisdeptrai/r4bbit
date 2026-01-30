@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Lock, Eye, EyeOff, CheckCircle, XCircle, Loader2, Shield } from 'lucide-react';
 import { Button, cn } from '../components/common';
 import { AnimatedBackground } from '../components/landing/AnimatedBackground';
+import { API_ENDPOINTS } from '../config/api';
 
 export default function ResetPassword() {
     const navigate = useNavigate();
@@ -46,8 +47,7 @@ export default function ResetPassword() {
         setStatus('loading');
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-            const res = await fetch(`${API_URL}/api/auth/reset-password/${token}`, {
+            const res = await fetch(API_ENDPOINTS.AUTH_RESET_PASSWORD(token!), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password, confirmPassword })

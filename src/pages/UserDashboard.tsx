@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { User, Order, OrderStatus } from '../types';
 import { Button, Badge, cn } from '../components/common';
+import { API_ENDPOINTS } from '../config/api';
 
 // Helper to determine asset type from product name
 const getAssetType = (title: string): 'Script' | 'Course' | 'Key' => {
@@ -64,8 +65,8 @@ export const UserOverview = ({ user }: { user: User }) => {
                 const token = localStorage.getItem('token');
                 if (!token) return;
 
-                const res = await fetch('http://localhost:5000/api/orders/my-orders', {
-                    headers: { 'x-auth-token': token }
+                const res = await fetch(API_ENDPOINTS.ORDERS_MY, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -81,7 +82,7 @@ export const UserOverview = ({ user }: { user: User }) => {
                         status: order.status === 'Completed' || order.status === 'Paid' ? 'Active' : 'Pending',
                         icon: getAssetIcon(getAssetType(order.product)),
                         // Using a placeholder for asset preview since order doesn't have image
-                        image: `http://localhost:5000/uploads/${getAssetType(order.product) === 'Course' ? 'course-cover.png' : getAssetType(order.product) === 'Key' ? 'license-key.png' : 'node-spoofer.png'}`
+                        image: API_ENDPOINTS.UPLOADS(`/uploads/${getAssetType(order.product) === 'Course' ? 'course-cover.png' : getAssetType(order.product) === 'Key' ? 'license-key.png' : 'node-spoofer.png'}`)
                     }));
                     setAssets(derivedAssets);
                 }
@@ -264,8 +265,8 @@ export const UserOrders = () => {
             const token = localStorage.getItem('token');
             if (token) {
                 try {
-                    const res = await fetch('http://localhost:5000/api/orders/my-orders', {
-                        headers: { 'x-auth-token': token }
+                    const res = await fetch(API_ENDPOINTS.ORDERS_MY, {
+                        headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (res.ok) {
                         const data = await res.json();

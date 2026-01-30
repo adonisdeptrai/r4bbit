@@ -25,6 +25,7 @@ import { User, Product, ProductType, Order } from '../types';
 import { Button, Badge, cn } from '../components/common';
 import TPBankMonitor from '../components/admin/TPBankMonitor';
 import BinanceMonitor from '../components/admin/BinanceMonitor';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
 // import { PRODUCTS } from '../utils/constants';
 
 // --- Types & Mock Data ---
@@ -165,7 +166,7 @@ const AdminOverview = () => {
     const fetchStats = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/stats/overview', {
+            const res = await fetch(API_ENDPOINTS.STATS_OVERVIEW, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -726,7 +727,7 @@ const AdminSettings = () => {
         const fetchData = async () => {
             try {
                 // Fetch Settings
-                const settingsRes = await fetch('http://localhost:5000/api/settings');
+                const settingsRes = await fetch(API_ENDPOINTS.SETTINGS);
                 if (settingsRes.ok) {
                     const data = await settingsRes.json();
                     setSettings(data);
@@ -752,7 +753,7 @@ const AdminSettings = () => {
             // @ts-ignore
             const { username, password, deviceId } = settings.bank;
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/settings/test-tpbank', {
+            const res = await fetch(API_ENDPOINTS.SETTINGS_TEST_TPBANK, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -783,7 +784,7 @@ const AdminSettings = () => {
         setSaveStatus('saving');
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/settings', {
+            const res = await fetch(API_ENDPOINTS.SETTINGS, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -824,7 +825,7 @@ const AdminSettings = () => {
             // @ts-ignore
             const { apiKey, secretKey } = settings.binance;
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/settings/test-binance', {
+            const res = await fetch(API_ENDPOINTS.SETTINGS_TEST_BINANCE, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1140,7 +1141,7 @@ const AdminSettings = () => {
                                             <div className="flex items-center gap-4">
                                                 {net.qrCodeUrl ? (
                                                     <div className="w-16 h-16 bg-white rounded-lg p-1 relative group/img">
-                                                        <img src={`http://localhost:5000${net.qrCodeUrl}`} alt="QR" className="w-full h-full object-contain" />
+                                                        <img src={`${API_BASE_URL}${net.qrCodeUrl}`} alt="QR" className="w-full h-full object-contain" />
                                                         <button
                                                             onClick={() => {
                                                                 const updated = [...(settings.crypto?.networks || [])];
@@ -1171,10 +1172,10 @@ const AdminSettings = () => {
 
                                                             try {
                                                                 const token = localStorage.getItem('token');
-                                                                const res = await fetch('http://localhost:5000/api/upload', {
+                                                                const res = await fetch(API_ENDPOINTS.UPLOAD, {
                                                                     method: 'POST',
                                                                     headers: {
-                                                                        'x-auth-token': token || ''
+                                                                        'Authorization': `Bearer ${token || ''}`
                                                                     },
                                                                     body: formData
                                                                 });
@@ -1912,15 +1913,15 @@ export const AdminDashboard = ({ user, activeTab }: { user: User; activeTab: str
                 const headers = { 'Authorization': `Bearer ${token}` };
 
                 // Fetch Products
-                const prodRes = await fetch('http://localhost:5000/api/products');
+                const prodRes = await fetch(API_ENDPOINTS.PRODUCTS);
                 if (prodRes.ok) setProducts(await prodRes.json());
 
                 // Fetch Orders (Admin only - needs auth)
-                const ordRes = await fetch('http://localhost:5000/api/orders', { headers });
+                const ordRes = await fetch(API_ENDPOINTS.ORDERS, { headers });
                 if (ordRes.ok) setOrders(await ordRes.json());
 
                 // Fetch Users
-                const userRes = await fetch('http://localhost:5000/api/users', { headers });
+                const userRes = await fetch(API_ENDPOINTS.USERS, { headers });
                 if (userRes.ok) setUsers(await userRes.json());
             } catch (error) {
                 console.error("Failed to fetch data:", error);
@@ -1939,8 +1940,8 @@ export const AdminDashboard = ({ user, activeTab }: { user: User; activeTab: str
         try {
             const isEdit = !!formData.id && !formData.id.startsWith('p'); // temp id check just in case
             const url = isEdit
-                ? `http://localhost:5000/api/products/${formData.id}`
-                : 'http://localhost:5000/api/products';
+                ? API_ENDPOINTS.PRODUCT_BY_ID(formData.id)
+                : API_ENDPOINTS.PRODUCTS;
             const method = isEdit ? 'PUT' : 'POST';
 
             // Use FormData to handle potential file uploads (future proof) or standard keys
@@ -1978,7 +1979,7 @@ export const AdminDashboard = ({ user, activeTab }: { user: User; activeTab: str
     const handleDeleteProduct = async (id: string) => {
         if (confirm('Are you sure you want to delete this product?')) {
             try {
-                const res = await fetch(`http://localhost:5000/api/products/${id}`, { method: 'DELETE' });
+                const res = await fetch(API_ENDPOINTS.PRODUCT_BY_ID(id), { method: 'DELETE' });
                 if (res.ok) {
                     setProducts(prev => prev.filter(p => p.id !== id));
                 } else {
@@ -2016,7 +2017,7 @@ export const AdminDashboard = ({ user, activeTab }: { user: User; activeTab: str
         try {
             // Use mongoId if available, else standard id
             const targetId = verifyingOrder.mongoId || verifyingOrder.id; // Backend handles both lookup now
-            const res = await fetch(`http://localhost:5000/api/orders/${targetId}/verify`, { method: 'PUT' });
+            const res = await fetch(API_ENDPOINTS.ORDER_VERIFY(targetId), { method: 'PUT' });
 
             if (res.ok) {
                 const updatedOrder = await res.json();

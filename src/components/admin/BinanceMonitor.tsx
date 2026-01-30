@@ -4,6 +4,7 @@ import { Activity, RefreshCw, Terminal, Bitcoin, TrendingUp, TrendingDown, Walle
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { cn } from '../common';
+import { API_ENDPOINTS } from '../../config/api';
 
 interface BinanceMonitorProps {
     className?: string;
@@ -19,7 +20,7 @@ const BinanceMonitor = ({ className }: BinanceMonitorProps) => {
         setLoadingHistory(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/settings/binance-history', {
+            const res = await fetch(API_ENDPOINTS.SETTINGS_BINANCE_HISTORY, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

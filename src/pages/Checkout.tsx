@@ -7,6 +7,7 @@ import { Button, Badge, cn } from '../components/common';
 import { ViewState } from '../types';
 import { useCart } from '../contexts/CartContext';
 import { AnimatedBackground } from '../components/landing/AnimatedBackground';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
 
 // Helper to parse fee string (e.g. "~1.0") to float
 const parseFee = (feeStr: string | undefined): number => {
@@ -35,7 +36,7 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
   });
 
   React.useEffect(() => {
-    fetch('http://localhost:5000/api/settings')
+    fetch(API_ENDPOINTS.SETTINGS)
       .then(res => res.json())
       .then(data => setSettings(data))
       .catch(err => console.error("Failed to load settings", err));
@@ -139,11 +140,11 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
     const storedUser = localStorage.getItem('user');
     const userData = storedUser ? JSON.parse(storedUser) : { username: 'Guest' };
 
-    const res = await fetch('http://localhost:5000/api/orders', {
+    const res = await fetch(API_ENDPOINTS.ORDERS, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-auth-token': token || ''
+        'Authorization': `Bearer ${token || ''}`
       },
       body: JSON.stringify({
         user: userData.username || 'Anonymous',
@@ -191,11 +192,11 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
         const expectedVND = Math.round(checkoutTotal * settings.exchangeRate);
         const token = localStorage.getItem('token');
 
-        const res = await fetch('http://localhost:5000/api/auth/verify-payment', {
+        const res = await fetch(API_ENDPOINTS.AUTH_VERIFY_PAYMENT, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-auth-token': token || ''
+            'Authorization': `Bearer ${token || ''}`
           },
           body: JSON.stringify({
             paymentCode,
@@ -240,11 +241,11 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
 
     try {
       // 1. Create Order
-      const res = await fetch('http://localhost:5000/api/payment/binance/create', {
+      const res = await fetch(API_ENDPOINTS.PAYMENT_BINANCE_CREATE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-auth-token': token || ''
+          'Authorization': `Bearer ${token || ''}`
         },
         body: JSON.stringify({
           amount: checkoutTotal,
@@ -271,8 +272,8 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
         }
 
         try {
-          const statusRes = await fetch(`http://localhost:5000/api/payment/binance/query/${data.data.orderId}`, {
-            headers: { 'x-auth-token': token || '' }
+          const statusRes = await fetch(API_ENDPOINTS.PAYMENT_BINANCE_QUERY(data.data.orderId), {
+            headers: { 'Authorization': `Bearer ${token || ''}` }
           });
           const statusData = await statusRes.json();
 
@@ -511,7 +512,7 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
                         {/* Priority: Manual Image QR -> Static Wallet QR */}
                         {selectedNetwork?.qrCodeUrl ? (
                           <img
-                            src={`http://localhost:5000${selectedNetwork.qrCodeUrl}`}
+                            src={`${API_BASE_URL}${selectedNetwork.qrCodeUrl}`}
                             className="w-full h-full object-contain"
                             alt="Payment QR"
                           />
