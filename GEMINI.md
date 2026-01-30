@@ -15,8 +15,6 @@ Triển khai Code: Clean code, Error handling đầy đủ. KHÔNG dùng mock da
 
 Tự động Kiểm thử: Sử dụng browser/scripts để verify logic và UI.
 
-Docker hóa: Sau khi code hoàn thiện, tự động tạo/cập nhật Dockerfile và docker-compose.yml để đóng gói project.
-
 Báo cáo: Chỉ gọi notify_user khi đã xong TẤT CẢ các bước trên hoặc bị block bởi lỗi hệ thống nghiêm trọng.
 
 3. TIÊU CHUẨN KỸ THUẬT (STRICT)

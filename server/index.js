@@ -74,7 +74,6 @@ const orderRoutes = require('./routes/orders');
 const statsRoutes = require('./routes/stats');
 
 app.use('/api/auth', authRoutes);
-app.use('/api/auth', require('./routes/oauth')); // Google OAuth routes
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/settings', require('./routes/settings'));

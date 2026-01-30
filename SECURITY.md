@@ -4,50 +4,49 @@
 
 **BEFORE deploying to production:**
 
-1. **Generate Strong JWT Secret:**
-   ```bash
-   openssl rand -hex 32
-   ```
-   Copy output và replace `JWT_SECRET` trong `.env`
+1. **Supabase Credentials:**
+   - `SUPABASE_URL`: Your Supabase project URL
+   - `SUPABASE_SERVICE_KEY`: Service role key (for backend)
+   - `SUPABASE_ANON_KEY`: Anon key (for frontend OAuth)
 
-2. **Update Email Credentials:**
+2. **Update Email Credentials (Optional):**
    - Use Gmail App Password (không dùng password thật)
    - Guide: https://support.google.com/accounts/answer/185833
 
-3. **Verify MongoDB URI:**
-   - Docker: `mongodb://mongo:27017/r4b_db`
-   - Local: `mongodb://localhost:27017/r4b_db`
-
-4. **Set Correct CLIENT_URL:**
+3. **Set Correct CLIENT_URL:**
    - Production: Your actual domain (e.g., `https://yourdomain.com`)
-   - Docker: `http://localhost:8080`
    - Local dev: `http://localhost:5173`
+
+4. **API URL Configuration:**
+   - Production: Set `VITE_API_URL` to your backend URL
+   - Local dev: Defaults to `http://localhost:5000`
 
 ## Setup Steps
 
 1. **Copy example files:**
    ```bash
    cp .env.example .env
-   cp server/.env.example server/.env
    ```
 
-2. **Fill in your credentials** in both `.env` files
+2. **Fill in your credentials** in `.env` file
 
 3. **Never commit .env files** (already in .gitignore)
 
 ## Environment Variables Reference
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `MONGO_URI` | ✅ Yes | - | MongoDB connection string |
-| `JWT_SECRET` | ✅ Yes | - | Secret key for JWT signing |
-| `EMAIL_USER` | ⚠️ Optional | - | Gmail for sending verification emails |
-| `EMAIL_PASS` | ⚠️ Optional | - | Gmail App Password |
-| `CLIENT_URL` | ✅ Yes | - | Frontend URL for email links |
+| Variable               | Required   | Default | Description                           |
+| ---------------------- | ---------- | ------- | ------------------------------------- |
+| `SUPABASE_URL`         | ✅ Yes      | -       | Supabase project URL                  |
+| `SUPABASE_SERVICE_KEY` | ✅ Yes      | -       | Supabase service role key             |
+| `SUPABASE_ANON_KEY`    | ✅ Yes      | -       | Supabase anon key                     |
+| `EMAIL_USER`           | ⚠️ Optional | -       | Gmail for sending verification emails |
+| `EMAIL_PASS`           | ⚠️ Optional | -       | Gmail App Password                    |
+| `CLIENT_URL`           | ✅ Yes      | -       | Frontend URL for email links          |
+| `VITE_API_URL`         | ✅ Yes      | -       | Backend API URL                       |
 
 ## Security Checklist
 
-- [ ] JWT_SECRET is at least 32 characters (use openssl)
+- [ ] Supabase keys are properly configured
 - [ ] EMAIL_PASS is Gmail App Password, not real password
 - [ ] `.env` files are in `.gitignore`
 - [ ] Production `.env` different from development

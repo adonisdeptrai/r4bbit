@@ -262,4 +262,139 @@ router.post('/refresh', async (req, res) => {
     }
 });
 
+// Forgot Password - Send reset email via Supabase
+router.post('/forgot-password', authLimiter, [
+    body('email', 'Please include a valid email').isEmail()
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ message: errors.array()[0].msg });
+    }
+
+    try {
+        const { email } = req.body;
+        const redirectUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password`;
+
+        // Use Supabase to send password reset email
+        const { error } = await supabaseAnonClient.auth.resetPasswordForEmail(email, {
+            redirectTo: redirectUrl
+        });
+
+        if (error) {
+            console.error('Forgot password error:', error);
+            // Don't reveal if email exists or not for security
+        }
+
+        // Always return success to prevent email enumeration
+        res.json({
+            success: true,
+            message: 'If an account exists with this email, you will receive a password reset link.'
+        });
+
+    } catch (err) {
+        console.error('Forgot password error:', err);
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+});
+
+// Reset Password - Update password with Supabase session
+router.post('/reset-password/:token', [
+    body('password', 'Password must be at least 6 characters').isLength({ min: 6 })
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ message: errors.array()[0].msg });
+    }
+
+    try {
+        const { password } = req.body;
+        const { token } = req.params;
+
+        // Supabase uses access_token from URL for password reset
+        // The token in URL is actually the access_token after email verification
+        const { data, error } = await supabaseAnonClient.auth.updateUser({
+            password: password
+        });
+
+        if (error) {
+            // If direct update fails, try to exchange the token first
+            console.error('Password update error:', error);
+            return res.status(400).json({ message: 'Invalid or expired reset link. Please request a new one.' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Password has been reset successfully. You can now log in with your new password.'
+        });
+
+    } catch (err) {
+        console.error('Reset password error:', err);
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+});
+
+// Verify Token - Check if Supabase session is valid
+router.post('/verify', async (req, res) => {
+    try {
+        const { token } = req.body;
+
+        if (!token) {
+            return res.status(400).json({ valid: false, message: 'Token is required' });
+        }
+
+        // Verify the Supabase token
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+
+        if (error || !user) {
+            return res.status(401).json({ valid: false, message: 'Invalid or expired token' });
+        }
+
+        // Get user data from public.users
+        const { data: userData } = await supabase
+            .from('users')
+            .select('id, username, email, role, is_verified')
+            .eq('id', user.id)
+            .single();
+
+        res.json({
+            valid: true,
+            user: userData || { id: user.id, email: user.email }
+        });
+
+    } catch (err) {
+        console.error('Token verification error:', err);
+        res.status(500).json({ valid: false, message: 'Server error' });
+    }
+});
+
+// Verify Payment - Check if user is verified for payment
+router.post('/verify-payment', auth, async (req, res) => {
+    try {
+        // Get user verification status
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('id, username, email, is_verified, role')
+            .eq('id', req.user.id)
+            .single();
+
+        if (error || !user) {
+            return res.status(404).json({ verified: false, message: 'User not found' });
+        }
+
+        res.json({
+            verified: user.is_verified,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role
+            }
+        });
+
+    } catch (err) {
+        console.error('Payment verification error:', err);
+        res.status(500).json({ verified: false, message: 'Server error' });
+    }
+});
+
 module.exports = router;
