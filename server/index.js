@@ -33,7 +33,7 @@ app.use(helmet({
     }
 }));
 
-// Note: mongoSanitize removed - Supabase handles SQL injection protection
+
 
 // Global Rate Limiting for API routes
 app.use('/api/', apiLimiter);
