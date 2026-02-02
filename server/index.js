@@ -85,6 +85,10 @@ app.use('/api/keys', require('./routes/keys'));
 app.use('/api/balance', require('./routes/balance'));
 app.use('/api/tickets', require('./routes/tickets'));
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;

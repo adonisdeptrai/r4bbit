@@ -75,7 +75,7 @@ export default function Auth({ onNavigate }: AuthProps) {
             return;
         }
 
-        if (!username || !password) {
+        if (!email || (mode === 'register' && !username) || !password) {
             setError("All fields are required");
             return;
         }
@@ -91,7 +91,9 @@ export default function Auth({ onNavigate }: AuthProps) {
             if (mode === 'login') {
                 await login(email, password); // Supabase requires email
             } else if (mode === 'register') {
+                console.log('Starting registration for:', email);
                 await register(username, email, password);
+                console.log('Registration call finished, navigating to verify-email');
                 navigate(`/verify-email?email=${encodeURIComponent(email)}`);
                 return;
             }

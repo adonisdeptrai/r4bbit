@@ -14,15 +14,7 @@ const { authLimiter, strictLimiter } = require('../middleware/rateLimiter');
  * - Supabase handles: password hashing, sessions, email verification
  */
 
-// Register - Deprecated (Handled by Supabase Client directly)
-router.post('/register', (req, res) => {
-    res.status(410).json({ message: 'Register endpoint is deprecated. Use Supabase SDK directly on the client.' });
-});
 
-// Login - Deprecated (Handled by Supabase Client directly)
-router.post('/login', (req, res) => {
-    res.status(410).json({ message: 'Login endpoint is deprecated. Use Supabase SDK directly on the client.' });
-});
 
 // Verify Email - Compatible với Supabase email verification
 router.get('/verify-email/:token', async (req, res) => {
@@ -136,40 +128,7 @@ router.post('/refresh', async (req, res) => {
     }
 });
 
-// Forgot Password - Send reset email via Supabase
-router.post('/forgot-password', authLimiter, [
-    body('email', 'Please include a valid email').isEmail()
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ message: errors.array()[0].msg });
-    }
 
-    try {
-        const { email } = req.body;
-        const redirectUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password`;
-
-        // Use Supabase to send password reset email
-        const { error } = await supabaseAnonClient.auth.resetPasswordForEmail(email, {
-            redirectTo: redirectUrl
-        });
-
-        if (error) {
-            console.error('Forgot password error:', error);
-            // Don't reveal if email exists or not for security
-        }
-
-        // Always return success to prevent email enumeration
-        res.json({
-            success: true,
-            message: 'If an account exists with this email, you will receive a password reset link.'
-        });
-
-    } catch (err) {
-        console.error('Forgot password error:', err);
-        res.status(500).json({ message: 'Server error', error: err.message });
-    }
-});
 
 // Reset Password - Update password with Supabase session
 router.post('/reset-password/:token', [
