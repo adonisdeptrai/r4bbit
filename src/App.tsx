@@ -26,17 +26,35 @@ const SmoothScrollLayout = () => (
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-brand-cyan/30 border-t-brand-cyan rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) return <Navigate to="/auth" replace state={{ from: location }} />;
   return children;
 };
 
 // Admin Route Wrapper
 const AdminRoute = ({ children }: { children: React.ReactElement }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
+  const location = useLocation();
 
-  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-brand-cyan/30 border-t-brand-cyan rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) return <Navigate to="/auth" replace state={{ from: location }} />;
   if (user?.role !== 'admin') return <Navigate to="/shop" replace />;
 
   return children;
