@@ -3,7 +3,7 @@ import {
     Menu, X, Play, Code, ShoppingBag, Globe, Zap, Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button, cn } from '../components/common';
+import { Button, cn, LiquidCard } from '../components/common';
 import { ViewState } from '../types';
 import { AnimatedBackground } from '../components/landing/AnimatedBackground';
 import { HeroTerminal } from '../components/landing/HeroTerminal';
@@ -48,7 +48,7 @@ const Navbar = ({ onNavigate }: { onNavigate: (view: ViewState) => void }) => {
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 className="fixed top-6 left-0 right-0 z-50 px-4 flex justify-center pointer-events-none"
             >
-                <div className="glass-panel rounded-full pl-6 pr-2 py-2 flex items-center gap-8 pointer-events-auto max-w-2xl w-full justify-between shadow-2xl shadow-black/50 border border-white/10 backdrop-blur-xl">
+                <div className="rounded-full pl-6 pr-2 py-2 flex items-center gap-8 pointer-events-auto max-w-2xl w-full justify-between shadow-2xl shadow-brand-cyan/5 border border-white/5 backdrop-blur-2xl bg-[#0F1420]/60">
                     {/* Logo */}
                     <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.dispatchEvent(new CustomEvent('R4B_SCROLL_TO', { detail: 'top' }))}>
                         <Logo />
@@ -203,10 +203,7 @@ const Features = () => {
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 items-stretch">
 
                     {/* Card 1: Automation (Cyan) */}
-                    <div className="group relative bg-[#0a0f1e] rounded-xl border border-white/10 p-5 md:p-8 overflow-hidden hover:border-brand-cyan/50 transition-all duration-500 flex flex-col justify-between h-full min-h-[280px]">
-                        <div className="absolute inset-0 bg-gradient-to-br from-brand-cyan/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div className="absolute -right-10 -top-10 w-32 h-32 bg-brand-cyan/20 blur-[50px] rounded-full group-hover:bg-brand-cyan/30 transition-all"></div>
-
+                    <LiquidCard glowColor="from-brand-cyan/20 to-blue-500/20" className="p-5 md:p-8 flex flex-col justify-between min-h-[280px]">
                         <div className="relative z-10">
                             <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-brand-cyan/10 border border-brand-cyan/20 flex items-center justify-center text-brand-cyan mb-4 md:mb-6 shadow-[0_0_15px_rgba(34,211,238,0.1)] group-hover:scale-110 transition-transform duration-500">
                                 <Cpu size={20} className="md:w-7 md:h-7" />
@@ -221,12 +218,10 @@ const Features = () => {
                                 <div className="h-full w-2/3 bg-brand-cyan shadow-[0_0_10px_rgba(34,211,238,0.5)]"></div>
                             </div>
                         </div>
-                    </div>
+                    </LiquidCard>
 
                     {/* Card 2: Speed/Quality (Purple) */}
-                    <div className="group relative bg-[#0a0f1e] rounded-xl border border-white/10 p-5 md:p-8 overflow-hidden hover:border-purple-500/50 transition-all duration-500 flex flex-col justify-between h-full min-h-[280px]">
-                        <div className="absolute inset-0 bg-gradient-to-bl from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
+                    <LiquidCard glowColor="from-purple-500/20 to-pink-500/20" className="p-5 md:p-8 flex flex-col justify-between min-h-[280px]">
                         <div className="relative z-10">
                             <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-4 md:mb-6 shadow-[0_0_15px_rgba(168,85,247,0.1)] group-hover:scale-110 transition-transform duration-500">
                                 <Zap size={20} className="md:w-7 md:h-7" />
@@ -236,17 +231,14 @@ const Features = () => {
                                 Fast script execution and delivery with guaranteed quality.
                             </p>
                         </div>
-                        {/* Visual element for mobile compact view */}
                         <div className="relative z-10 flex gap-1 mt-auto pt-4">
                             <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
                             <span className="text-[10px] text-purple-400 font-mono">QUALITY</span>
                         </div>
-                    </div>
+                    </LiquidCard>
 
                     {/* Card 3: Protection (Emerald) */}
-                    <div className="group relative bg-[#0a0f1e] rounded-xl border border-white/10 p-5 md:p-8 overflow-hidden hover:border-emerald-500/50 transition-all duration-500 flex flex-col justify-between h-full min-h-[280px]">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
+                    <LiquidCard glowColor="from-emerald-500/20 to-teal-500/20" className="p-5 md:p-8 flex flex-col justify-between min-h-[280px]">
                         <div className="relative z-10">
                             <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4 md:mb-6 shadow-[0_0_15px_rgba(16,185,129,0.1)] group-hover:scale-110 transition-transform duration-500">
                                 <ShieldCheck size={20} className="md:w-7 md:h-7" />
@@ -261,12 +253,10 @@ const Features = () => {
                                 100% SAFE
                             </div>
                         </div>
-                    </div>
+                    </LiquidCard>
 
                     {/* Card 4: Uptime (Blue) */}
-                    <div className="group relative bg-[#0a0f1e] rounded-xl border border-white/10 p-5 md:p-8 overflow-hidden hover:border-blue-500/50 transition-all duration-500 flex flex-col justify-between h-full min-h-[280px]">
-                        <div className="absolute inset-0 bg-gradient-to-tl from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-
+                    <LiquidCard glowColor="from-blue-500/20 to-indigo-500/20" className="p-5 md:p-8 flex flex-col justify-between min-h-[280px]">
                         <div className="relative z-10">
                             <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-4 md:mb-6 shadow-[0_0_15px_rgba(59,130,246,0.1)] group-hover:scale-110 transition-transform duration-500">
                                 <Activity size={20} className="md:w-7 md:h-7" />
@@ -276,14 +266,13 @@ const Features = () => {
                                 Enterprise-grade infrastructure ensuring 24/7 reliability.
                             </p>
                         </div>
-                        {/* Chart visual */}
                         <div className="relative z-10 h-8 mt-auto pt-4 opacity-50">
                             <svg viewBox="0 0 100 20" className="w-full h-full fill-none stroke-blue-500" preserveAspectRatio="none">
                                 <path d="M0 20 Q 20 10, 40 10 T 80 5 T 100 0" strokeWidth="1.5" />
                                 <path d="M0 20 L 100 20 L 100 0 Q 80 5, 40 10 Q 20 10, 0 20" className="fill-blue-500/20 stroke-none" />
                             </svg>
                         </div>
-                    </div>
+                    </LiquidCard>
 
                 </div>
             </div>
