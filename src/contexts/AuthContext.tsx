@@ -50,10 +50,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('AuthContext: Auth state changed:', event, session?.user?.email);
 
-      if (session?.user) {
+      if (session?.user && session?.access_token) {
+        // CRITICAL: Set token immediately
         localStorage.setItem('token', session.access_token);
+        console.log('AuthContext: Token synced to localStorage');
+
+        // Sync user data
         await syncUserData(session.user);
-      } else {
+      } else if (event === 'SIGNED_OUT' || !session) {
         setUser(null);
         localStorage.removeItem('user');
         localStorage.removeItem('token');
@@ -68,22 +72,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const syncUserData = async (supabaseUser: SupabaseUser) => {
     try {
       console.log('AuthContext: syncUserData starting for', supabaseUser.id);
-      // Fetch additional data from public.users table
-      const { data: userData, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', supabaseUser.id) // Use ID for better accuracy
-        .single();
+
+      // Double check token if missing
+      if (!localStorage.getItem('token')) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          localStorage.setItem('token', session.access_token);
+        }
+      }
+
+      // Fetch additional data from public.users table with timeout
+      const fetchUserData = async () => {
+        return await supabase
+          .from('users')
+          .select('*')
+          .eq('id', supabaseUser.id)
+          .single();
+      };
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out')), 10000)
+      );
+
+      // @ts-ignore
+      const { data: userData, error } = await Promise.race([
+        fetchUserData(),
+        timeoutPromise
+      ]).catch(err => ({ data: null, error: err }));
 
       if (error) {
-        console.error('AuthContext: Error fetching user data:', error);
-        // Fallback to basic Supabase user data
+        console.error('AuthContext: Error fetching user data (or timeout):', error);
+
+        // Fallback: Try to get role from metadata, default to 'user'
+        const fallbackRole = supabaseUser.user_metadata?.role || 'user';
+        console.log('AuthContext: Using fallback role:', fallbackRole);
+
+        // Fallback to basic Supabase user data but DO NOT FAIL LOGIN
         const basicUser: User = {
           id: supabaseUser.id,
           username: supabaseUser.user_metadata?.username || supabaseUser.email?.split('@')[0] || 'User',
           name: supabaseUser.user_metadata?.username || 'User',
           email: supabaseUser.email || '',
-          role: 'user',
+          role: fallbackRole,
           balance: 0
         };
         setUser(basicUser);
@@ -100,15 +130,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         balance: userData.balance
       };
 
-      // If user is verified in Supabase but not in our state, we could reflect that locally
-      // but the server is the source of truth for the 'role' and 'balance'.
-
       console.log('AuthContext: syncUserData complete', mappedUser);
       setUser(mappedUser);
       localStorage.setItem('user', JSON.stringify(mappedUser));
     } catch (err) {
       console.error('AuthContext: Sync user data error:', err);
-      setLoading(false);
+      // Even if sync fails, we should stop loading to avoid UI hang
+    } finally {
+      // Ensure loading is set to false in case this is called directly
+      // But in onAuthStateChange it's handled there.
     }
   };
 

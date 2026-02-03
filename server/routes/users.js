@@ -4,6 +4,25 @@ const { supabase } = require('../config/supabase');
 const auth = require('../middleware/auth');
 const adminAuth = require('../middleware/adminAuth');
 
+// GET Current User Profile
+router.get('/profile', auth, async (req, res) => {
+    try {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', req.user.id)
+            .single();
+
+        if (error) throw error;
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        res.json(user);
+    } catch (err) {
+        console.error("Fetch Profile Error:", err);
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+});
+
 // GET All Users (Admin Only)
 router.get('/', auth, adminAuth, async (req, res) => {
     try {
