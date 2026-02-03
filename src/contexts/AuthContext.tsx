@@ -29,24 +29,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        syncUserData(session.user);
-      } else {
-        setUser(null);
+    // Get initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      try {
+        if (session?.user) {
+          localStorage.setItem('token', session.access_token);
+          await syncUserData(session.user);
+        } else {
+          setUser(null);
+          localStorage.removeItem('token');
+        }
+      } catch (err) {
+        console.error('Error in initial session sync:', err);
+      } finally {
         setLoading(false);
       }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event);
+      console.log('AuthContext: Auth state changed:', event, session?.user?.email);
 
       if (session?.user) {
+        localStorage.setItem('token', session.access_token);
         await syncUserData(session.user);
       } else {
         setUser(null);
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
       setLoading(false);
     });
@@ -57,6 +67,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Sync additional user data from public.users table
   const syncUserData = async (supabaseUser: SupabaseUser) => {
     try {
+      console.log('AuthContext: syncUserData starting for', supabaseUser.id);
       // Fetch additional data from public.users table
       const { data: userData, error } = await supabase
         .from('users')
@@ -65,7 +76,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .single();
 
       if (error) {
-        console.error('Error fetching user data:', error);
+        console.error('AuthContext: Error fetching user data:', error);
         // Fallback to basic Supabase user data
         const basicUser: User = {
           id: supabaseUser.id,
@@ -92,10 +103,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // If user is verified in Supabase but not in our state, we could reflect that locally
       // but the server is the source of truth for the 'role' and 'balance'.
 
+      console.log('AuthContext: syncUserData complete', mappedUser);
       setUser(mappedUser);
       localStorage.setItem('user', JSON.stringify(mappedUser));
     } catch (err) {
-      console.error('Sync user data error:', err);
+      console.error('AuthContext: Sync user data error:', err);
       setLoading(false);
     }
   };
