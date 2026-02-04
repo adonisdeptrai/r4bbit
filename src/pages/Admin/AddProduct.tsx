@@ -10,9 +10,11 @@ const AddProduct = () => {
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         title: '',
-        type: 'Automation Script',
+        category: 'Automation Script',
         price: 0,
         originalPrice: 0,
+        stock: 0,
+        unlimitedStock: false,
         platform: 'Node Native',
         rating: 5,
         reviewsCount: 0,
@@ -52,9 +54,11 @@ const AddProduct = () => {
 
         const data = new FormData();
         data.append('title', formData.title);
-        data.append('type', formData.type);
+        data.append('category', formData.category);
         data.append('price', formData.price.toString());
         data.append('originalPrice', formData.originalPrice.toString());
+        data.append('stock', formData.stock.toString());
+        data.append('unlimitedStock', formData.unlimitedStock.toString());
         data.append('platform', formData.platform);
         data.append('rating', formData.rating.toString());
         data.append('reviewsCount', formData.reviewsCount.toString());
@@ -65,8 +69,18 @@ const AddProduct = () => {
         }
 
         try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('You are not authenticated. Please log in again.');
+                return;
+            }
+
             const response = await fetch(API_ENDPOINTS.PRODUCTS, {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                    // 'Content-Type': 'multipart/form-data' // Do NOT set this manually when using FormData, browser does it with boundary
+                },
                 body: data
             });
 
@@ -75,9 +89,11 @@ const AddProduct = () => {
                 // Reset form
                 setFormData({
                     title: '',
-                    type: 'Automation Script',
+                    category: 'Automation Script',
                     price: 0,
                     originalPrice: 0,
+                    stock: 0,
+                    unlimitedStock: false,
                     platform: 'Node Native',
                     rating: 5,
                     reviewsCount: 0,
@@ -155,8 +171,8 @@ const AddProduct = () => {
                             <label className={labelClasses}>Category</label>
                             <div className="relative">
                                 <select
-                                    name="type"
-                                    value={formData.type}
+                                    name="category"
+                                    value={formData.category}
                                     onChange={handleChange}
                                     className={`${inputClasses} appearance-none cursor-pointer`}
                                 >
@@ -215,6 +231,37 @@ const AddProduct = () => {
                                 <option value="Windows Executable">Windows Executable</option>
                             </select>
                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                    </div>
+
+                    {/* Stock Management */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className={labelClasses}>Stock Quantity</label>
+                            <input
+                                type="number"
+                                name="stock"
+                                value={formData.stock}
+                                onChange={handleChange}
+                                disabled={formData.unlimitedStock}
+                                className={`${inputClasses} ${formData.unlimitedStock ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                min="0"
+                            />
+                        </div>
+                        <div className="flex items-center h-full pt-6">
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                                <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-colors ${formData.unlimitedStock ? 'bg-brand-cyan border-brand-cyan text-black' : 'border-slate-600 bg-transparent text-transparent hover:border-brand-cyan'}`}>
+                                    <Check size={16} strokeWidth={3} />
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    name="unlimitedStock"
+                                    checked={formData.unlimitedStock}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, unlimitedStock: e.target.checked }))}
+                                    className="hidden"
+                                />
+                                <span className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">Unlimited Stock</span>
+                            </label>
                         </div>
                     </div>
 

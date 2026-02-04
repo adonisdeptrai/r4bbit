@@ -12,7 +12,7 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { UserMenu } from '../components/layout/UserMenu';
 import { AnimatedBackground } from '../components/landing/AnimatedBackground';
-import { API_ENDPOINTS } from '../config/api';
+import { ProductsAPI } from '../config/supabaseApi';
 
 // --- Constants ---
 const CATEGORIES = ['ALL', ...Object.values(ProductType)];
@@ -489,11 +489,8 @@ export default function Shop({ onNavigate }: { onNavigate: (view: ViewState) => 
     React.useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const res = await fetch(API_ENDPOINTS.PRODUCTS);
-                if (res.ok) {
-                    const data = await res.json();
-                    setProducts(data);
-                }
+                const data = await ProductsAPI.getAll();
+                setProducts(data);
             } catch (error) {
                 console.error("Failed to fetch products:", error);
             }
