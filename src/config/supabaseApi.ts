@@ -12,10 +12,7 @@ export const ProductsAPI = {
     async getAll(): Promise<Product[]> {
         const { data, error } = await supabase
             .from('products')
-            .select(`
-        *,
-        platforms:platform_id (name, icon, color)
-      `)
+            .select('*')
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -34,7 +31,7 @@ export const ProductsAPI = {
             reviewsCount: p.reviews_count || 0,
             stock: p.stock,
             unlimitedStock: p.unlimited_stock,
-            platform: p.platforms?.name,
+            platform: p.platform_id,
             platformId: p.platform_id
         }));
     },
@@ -42,7 +39,7 @@ export const ProductsAPI = {
     async getById(id: string): Promise<Product | null> {
         const { data, error } = await supabase
             .from('products')
-            .select(`*, platforms:platform_id (name, icon, color)`)
+            .select('*')
             .eq('id', id)
             .single();
 
