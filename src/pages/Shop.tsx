@@ -668,12 +668,19 @@ export default function Shop({ onNavigate }: { onNavigate: (view: ViewState) => 
                                     key={cat}
                                     onClick={() => setActiveFilter(cat)}
                                     className={cn(
-                                        "px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border",
+                                        "relative px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border z-10",
                                         activeFilter === cat
-                                            ? "bg-brand-cyan text-black border-brand-cyan shadow-[0_0_15px_rgba(34,211,238,0.4)]"
+                                            ? "text-black border-transparent"
                                             : "bg-white/5 text-slate-400 border-white/5 hover:border-white/20 hover:text-white hover:bg-white/10"
                                     )}
                                 >
+                                    {activeFilter === cat && (
+                                        <motion.div
+                                            layoutId="category-filter-bg"
+                                            className="absolute inset-0 bg-brand-cyan rounded-full -z-10 shadow-[0_0_20px_rgba(34,211,238,0.5)]"
+                                            transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                                        />
+                                    )}
                                     {cat === 'ALL' ? 'All Products' : `${cat}s`}
                                 </button>
                             ))}
