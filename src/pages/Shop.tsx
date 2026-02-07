@@ -682,20 +682,21 @@ export default function Shop({ onNavigate }: { onNavigate: (view: ViewState) => 
                                     key={cat}
                                     onClick={() => setActiveFilter(cat)}
                                     className={cn(
-                                        "relative px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border z-10",
+                                        "relative px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors overflow-hidden",
                                         activeFilter === cat
-                                            ? "text-black border-transparent"
-                                            : "bg-white/5 text-slate-400 border-white/5 hover:border-white/20 hover:text-white hover:bg-white/10"
+                                            ? "text-black"
+                                            : "bg-white/5 text-slate-400 border border-white/5 hover:border-white/20 hover:text-white hover:bg-white/10"
                                     )}
                                 >
                                     {activeFilter === cat && (
-                                        <motion.div
+                                        <motion.span
                                             layoutId="category-filter-bg"
-                                            className="absolute inset-0 bg-brand-cyan rounded-full -z-10 shadow-[0_0_20px_rgba(34,211,238,0.5)]"
-                                            transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                                            className="absolute inset-0 bg-brand-cyan rounded-full"
+                                            style={{ borderRadius: 9999 }}
+                                            transition={{ type: "spring", stiffness: 500, damping: 35 }}
                                         />
                                     )}
-                                    {cat === 'ALL' ? 'All Products' : `${cat}s`}
+                                    <span className="relative z-10">{cat === 'ALL' ? 'All Products' : `${cat}s`}</span>
                                 </button>
                             ))}
                         </div>
