@@ -174,6 +174,7 @@ function AppContent() {
 }
 
 import ErrorBoundary from './components/common/ErrorBoundary';
+import { WishlistProvider } from './contexts/WishlistContext';
 
 export default function App() {
   return (
@@ -181,8 +182,10 @@ export default function App() {
       <ToastProvider>
         <AuthProvider>
           <CartProvider>
-            <AppContent />
-            <Analytics />
+            <WishlistProvider>
+              <AppContent />
+              <Analytics />
+            </WishlistProvider>
           </CartProvider>
         </AuthProvider>
       </ToastProvider>

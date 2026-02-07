@@ -700,6 +700,115 @@ export const AppSettingsAPI = {
     }
 };
 
+// ============== WISHLIST ==============
+
+export interface WishlistItem {
+    id: string;
+    productId: string;
+    product: {
+        id: string;
+        title: string;
+        price: number;
+        image: string;
+        type: string;
+    };
+    createdAt: string;
+}
+
+export const WishlistAPI = {
+    async getAll(): Promise<WishlistItem[]> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+
+        const { data, error } = await supabase
+            .from('wishlists')
+            .select(`
+                id,
+                product_id,
+                created_at,
+                products:product_id (id, title, price, image, type)
+            `)
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        return (data || []).map((item: any) => ({
+            id: item.id,
+            productId: item.product_id,
+            product: {
+                id: item.products?.id,
+                title: item.products?.title,
+                price: item.products?.price,
+                image: item.products?.image,
+                type: item.products?.type
+            },
+            createdAt: item.created_at
+        }));
+    },
+
+    async add(productId: string): Promise<void> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { error } = await supabase
+            .from('wishlists')
+            .insert({ user_id: user.id, product_id: productId });
+
+        if (error && error.code !== '23505') throw error; // Ignore duplicate key error
+    },
+
+    async remove(productId: string): Promise<void> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { error } = await supabase
+            .from('wishlists')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('product_id', productId);
+
+        if (error) throw error;
+    },
+
+    async isInWishlist(productId: string): Promise<boolean> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return false;
+
+        const { data } = await supabase
+            .from('wishlists')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('product_id', productId)
+            .single();
+
+        return !!data;
+    },
+
+    async toggle(productId: string): Promise<boolean> {
+        const isInList = await this.isInWishlist(productId);
+        if (isInList) {
+            await this.remove(productId);
+            return false;
+        } else {
+            await this.add(productId);
+            return true;
+        }
+    },
+
+    async getProductIds(): Promise<string[]> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+
+        const { data } = await supabase
+            .from('wishlists')
+            .select('product_id')
+            .eq('user_id', user.id);
+
+        return (data || []).map((item: any) => item.product_id);
+    }
+};
+
 // Default export for convenience
 export default {
     Products: ProductsAPI,
@@ -711,5 +820,6 @@ export default {
     Tickets: TicketsAPI,
     ProductKeys: ProductKeysAPI,
     Transactions: TransactionsAPI,
-    Reviews: ReviewsAPI
+    Reviews: ReviewsAPI,
+    Wishlist: WishlistAPI
 };

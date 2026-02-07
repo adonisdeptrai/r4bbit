@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     ShoppingBag, Search, Filter, X, Plus, Minus, Trash2,
     ArrowLeft, Star, Layers, Cpu, GraduationCap, Key, Box,
-    Sparkles, Zap, ArrowRight, CheckCircle, Info, LayoutGrid, List, Menu, Code
+    Sparkles, Zap, ArrowRight, CheckCircle, Info, LayoutGrid, List, Menu, Code, Heart
 } from 'lucide-react';
 import { Button, Badge, cn } from '../components/common';
 import { ViewState, ProductType, Product } from '../types';
@@ -14,6 +14,7 @@ import { UserMenu } from '../components/layout/UserMenu';
 import { AnimatedBackground } from '../components/landing/AnimatedBackground';
 import { ProductsAPI } from '../config/supabaseApi';
 import ProductReviews from '../components/ProductReviews';
+import { useWishlist } from '../contexts/WishlistContext';
 
 // --- Constants ---
 const CATEGORIES = ['ALL', ...Object.values(ProductType)];
@@ -48,6 +49,9 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAdd, onClick }) => {
     const styles = getProductColor(product.type);
     const Icon = styles.icon;
+    const { user } = useAuth();
+    const { isInWishlist, toggleWishlist } = useWishlist();
+    const inWishlist = isInWishlist(product.id);
 
     return (
         <motion.div
@@ -74,6 +78,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAdd, onClick }) =>
                         <Icon size={12} className={styles.text} /> {product.type}
                     </div>
                 </div>
+
+                {/* Wishlist Button */}
+                {user && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
+                        className={`absolute top-5 right-5 p-2.5 rounded-full backdrop-blur-xl border transition-all duration-300 ${inWishlist ? 'bg-red-500/20 border-red-500/30 text-red-400' : 'bg-black/40 border-white/10 text-white/60 hover:text-red-400 hover:border-red-500/30'}`}
+                    >
+                        <Heart size={18} className={inWishlist ? 'fill-current' : ''} />
+                    </button>
+                )}
             </div>
 
             {/* Right: Content Section */}
@@ -165,9 +179,12 @@ const ProductDetailModal = ({
     onNavigate: (view: ViewState) => void
 }) => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const { isInWishlist, toggleWishlist } = useWishlist();
     if (!product || !isOpen) return null;
     const styles = getProductColor(product.type);
     const Icon = styles.icon;
+    const inWishlist = isInWishlist(product.id);
 
     return (
         <AnimatePresence>
@@ -194,6 +211,16 @@ const ProductDetailModal = ({
                             >
                                 <X size={18} />
                             </button>
+
+                            {/* Wishlist Button */}
+                            {user && (
+                                <button
+                                    onClick={() => toggleWishlist(product.id)}
+                                    className={`absolute top-5 right-16 z-50 p-2 rounded-full backdrop-blur-md border transition-all duration-300 ${inWishlist ? 'bg-red-500/20 border-red-500/30 text-red-400' : 'bg-black/40 border-white/5 text-white/60 hover:text-red-400 hover:border-red-500/30'}`}
+                                >
+                                    <Heart size={18} className={inWishlist ? 'fill-current' : ''} />
+                                </button>
+                            )}
 
                             {/* Left: Image */}
                             <div className="w-full md:w-[45%] relative bg-[#020617] min-h-[250px] md:min-h-full p-3 md:p-5 shrink-0 flex flex-col justify-center">
