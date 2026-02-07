@@ -65,12 +65,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAdd, onClick }) =>
             {/* Left: Image Section */}
             <div className="w-full md:w-[420px] shrink-0 relative overflow-hidden bg-slate-900 group-hover:shadow-right-xl transition-all duration-500">
                 <div className="absolute inset-0 bg-slate-800 animate-pulse" />
-                <img
-                    src={product.image}
-                    alt={product.title}
-                    className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent opacity-80 md:opacity-50" />
+                {product.image ? (
+                    <img
+                        src={product.image}
+                        alt={product.title}
+                        className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out relative z-[1]"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center absolute inset-0 z-[1]">
+                        <div className="text-slate-600 text-6xl font-bold">{product.title.charAt(0)}</div>
+                    </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent opacity-80 md:opacity-50 z-[2]" />
 
                 {/* Mobile Badges */}
                 <div className="absolute top-5 left-5 md:hidden">
@@ -439,11 +446,18 @@ const ProductCardMini: React.FC<ProductCardProps> = ({ product, onAdd, onClick }
         >
             {/* Image Section */}
             <div className="relative aspect-[5/4] overflow-hidden bg-slate-900">
-                <img
-                    src={product.image}
-                    alt={product.title}
-                    className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
+                {product.image ? (
+                    <img
+                        src={product.image}
+                        alt={product.title}
+                        className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+                        <div className="text-slate-600 text-4xl font-bold">{product.title.charAt(0)}</div>
+                    </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent opacity-60" />
 
                 {/* Badge (Top Left) */}
@@ -484,7 +498,7 @@ const ProductCardMini: React.FC<ProductCardProps> = ({ product, onAdd, onClick }
                 </p>
 
                 {/* Divider */}
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-5 -mx-6 w-[calc(100%+3rem)]" />
+                <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-4" />
 
                 {/* Footer: Price & Action */}
                 <div className="mt-auto flex items-center justify-between">
