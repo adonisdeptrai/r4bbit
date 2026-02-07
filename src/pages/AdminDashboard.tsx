@@ -754,7 +754,8 @@ const AdminSettings = () => {
             enabled: false,
             networks: []
         },
-        exchangeRate: 25000
+        exchangeRate: 25000,
+        reviewEnabled: true
     });
     const [banks, setBanks] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -767,11 +768,18 @@ const AdminSettings = () => {
     React.useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch Settings
+                // Fetch Settings from API
                 const settingsRes = await fetch(API_ENDPOINTS.SETTINGS);
                 if (settingsRes.ok) {
                     const data = await settingsRes.json();
-                    setSettings(data);
+                    setSettings(prev => ({ ...prev, ...data }));
+                }
+
+                // Fetch review_enabled from Supabase
+                const { AppSettingsAPI } = await import('../config/supabaseApi');
+                const appSettings = await AppSettingsAPI.get();
+                if (appSettings) {
+                    setSettings(prev => ({ ...prev, reviewEnabled: appSettings.review_enabled ?? true }));
                 }
 
                 // Fetch Banks
@@ -833,6 +841,11 @@ const AdminSettings = () => {
                 },
                 body: JSON.stringify(settings)
             });
+
+            // Save review_enabled to Supabase
+            const { AppSettingsAPI } = await import('../config/supabaseApi');
+            await AppSettingsAPI.setReviewEnabled(settings.reviewEnabled);
+
             if (res.ok) {
                 setSaveStatus('saved');
                 setTimeout(() => setSaveStatus('idle'), 2000);
@@ -924,6 +937,33 @@ const AdminSettings = () => {
                             />
                         </div>
                         <p className="text-[10px] text-slate-500">Used for calculating VietQR amounts.</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Feature Toggles */}
+            <div className="bg-white/5 backdrop-blur-xl p-6 rounded-2xl border border-white/10 shadow-xl space-y-6">
+                <h3 className="font-bold text-lg text-white border-b border-white/5 pb-2 flex items-center gap-2">
+                    <Star size={20} className="text-amber-400" /> Feature Toggles
+                </h3>
+
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
+                        <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg ${settings.reviewEnabled ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                                <MessageSquare size={18} />
+                            </div>
+                            <div>
+                                <p className="font-bold text-white text-sm">Enable Product Reviews</p>
+                                <p className="text-xs text-slate-400">Allow users to rate and review purchased products</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => handleChange('reviewEnabled', !settings.reviewEnabled)}
+                            className={`relative w-11 h-6 rounded-full transition-colors ${settings.reviewEnabled ? 'bg-amber-500' : 'bg-slate-600'}`}
+                        >
+                            <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${settings.reviewEnabled ? 'translate-x-5' : ''}`} />
+                        </button>
                     </div>
                 </div>
             </div>

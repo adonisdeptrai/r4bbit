@@ -497,6 +497,158 @@ export const ProductKeysAPI = {
     }
 };
 
+// ============== REVIEWS ==============
+
+export interface Review {
+    id: string;
+    productId: string;
+    userId: string;
+    username: string;
+    avatar?: string;
+    rating: number;
+    comment: string;
+    createdAt: string;
+}
+
+export const ReviewsAPI = {
+    async getByProduct(productId: string): Promise<Review[]> {
+        const { data, error } = await supabase
+            .from('reviews')
+            .select(`
+                *,
+                users:user_id (username, avatar)
+            `)
+            .eq('product_id', productId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        return (data || []).map((r: any) => ({
+            id: r.id,
+            productId: r.product_id,
+            userId: r.user_id,
+            username: r.users?.username || 'Anonymous',
+            avatar: r.users?.avatar,
+            rating: r.rating,
+            comment: r.comment || '',
+            createdAt: r.created_at
+        }));
+    },
+
+    async create(productId: string, rating: number, comment: string): Promise<Review> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { data, error } = await supabase
+            .from('reviews')
+            .insert({
+                product_id: productId,
+                user_id: user.id,
+                rating,
+                comment
+            })
+            .select(`*, users:user_id (username, avatar)`)
+            .single();
+
+        if (error) throw error;
+
+        return {
+            id: data.id,
+            productId: data.product_id,
+            userId: data.user_id,
+            username: data.users?.username || 'Anonymous',
+            avatar: data.users?.avatar,
+            rating: data.rating,
+            comment: data.comment || '',
+            createdAt: data.created_at
+        };
+    },
+
+    async update(reviewId: string, rating: number, comment: string): Promise<void> {
+        const { error } = await supabase
+            .from('reviews')
+            .update({ rating, comment, updated_at: new Date().toISOString() })
+            .eq('id', reviewId);
+
+        if (error) throw error;
+    },
+
+    async delete(reviewId: string): Promise<void> {
+        const { error } = await supabase
+            .from('reviews')
+            .delete()
+            .eq('id', reviewId);
+
+        if (error) throw error;
+    },
+
+    async canReview(productId: string): Promise<{ canReview: boolean; existingReview?: Review }> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return { canReview: false };
+
+        // Check if user already reviewed this product
+        const { data: existingReview } = await supabase
+            .from('reviews')
+            .select(`*, users:user_id (username, avatar)`)
+            .eq('product_id', productId)
+            .eq('user_id', user.id)
+            .single();
+
+        if (existingReview) {
+            return {
+                canReview: false,
+                existingReview: {
+                    id: existingReview.id,
+                    productId: existingReview.product_id,
+                    userId: existingReview.user_id,
+                    username: existingReview.users?.username || 'Anonymous',
+                    avatar: existingReview.users?.avatar,
+                    rating: existingReview.rating,
+                    comment: existingReview.comment || '',
+                    createdAt: existingReview.created_at
+                }
+            };
+        }
+
+        // Check if user has completed order for this product
+        const { data: completedOrder } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('user', user.id)
+            .eq('product', productId)
+            .eq('status', 'completed')
+            .limit(1)
+            .single();
+
+        return { canReview: !!completedOrder };
+    },
+
+    async getMyReview(productId: string): Promise<Review | null> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+
+        const { data } = await supabase
+            .from('reviews')
+            .select(`*, users:user_id (username, avatar)`)
+            .eq('product_id', productId)
+            .eq('user_id', user.id)
+            .single();
+
+        if (!data) return null;
+
+        return {
+            id: data.id,
+            productId: data.product_id,
+            userId: data.user_id,
+            username: data.users?.username || 'Anonymous',
+            avatar: data.users?.avatar,
+            rating: data.rating,
+            comment: data.comment || '',
+            createdAt: data.created_at
+        };
+    }
+};
+
 // ============== TRANSACTIONS ==============
 
 export const TransactionsAPI = {
@@ -515,14 +667,49 @@ export const TransactionsAPI = {
     }
 };
 
+// ============== APP SETTINGS ==============
+
+export const AppSettingsAPI = {
+    async get(): Promise<any> {
+        const { data, error } = await supabase
+            .from('settings')
+            .select('*')
+            .limit(1)
+            .single();
+
+        if (error) return null;
+        return data;
+    },
+
+    async update(updates: Record<string, any>): Promise<void> {
+        const { error } = await supabase
+            .from('settings')
+            .update({ ...updates, updated_at: new Date().toISOString() })
+            .not('id', 'is', null); // Update the only row
+
+        if (error) throw error;
+    },
+
+    async isReviewEnabled(): Promise<boolean> {
+        const settings = await this.get();
+        return settings?.review_enabled ?? true;
+    },
+
+    async setReviewEnabled(enabled: boolean): Promise<void> {
+        await this.update({ review_enabled: enabled });
+    }
+};
+
 // Default export for convenience
 export default {
     Products: ProductsAPI,
     Orders: OrdersAPI,
     Users: UsersAPI,
     Settings: SettingsAPI,
+    AppSettings: AppSettingsAPI,
     Stats: StatsAPI,
     Tickets: TicketsAPI,
     ProductKeys: ProductKeysAPI,
-    Transactions: TransactionsAPI
+    Transactions: TransactionsAPI,
+    Reviews: ReviewsAPI
 };

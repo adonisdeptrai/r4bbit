@@ -13,6 +13,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { UserMenu } from '../components/layout/UserMenu';
 import { AnimatedBackground } from '../components/landing/AnimatedBackground';
 import { ProductsAPI } from '../config/supabaseApi';
+import ProductReviews from '../components/ProductReviews';
 
 // --- Constants ---
 const CATEGORIES = ['ALL', ...Object.values(ProductType)];
@@ -251,6 +252,9 @@ const ProductDetailModal = ({
                                             ))}
                                         </div>
                                     </div>
+
+                                    {/* Reviews Section */}
+                                    <ProductReviews productId={product.id} productTitle={product.title} />
                                 </div>
 
                                 {/* Actions Footer */}
