@@ -12,12 +12,12 @@ import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
 import { ProductsAPI, OrdersAPI, UsersAPI } from '../config/supabaseApi';
 
 // Import from modular admin structure
-import { PendingKeyOrder, INITIAL_PENDING_KEYS } from './admin/types';
+import { PendingKeyOrder, INITIAL_PENDING_KEYS } from './admin_lower/types';
 import {
     VerifyOrderModal,
     SendKeyModal,
     ManageProductModal
-} from './admin/modals';
+} from './admin_lower/modals';
 import {
     AdminOverview,
     AdminProducts,
@@ -26,7 +26,7 @@ import {
     AdminCustomers,
     AdminMessages,
     AdminSettings
-} from './admin/views';
+} from './admin_lower/views';
 
 // External admin components
 import TPBankMonitor from '../components/admin/TPBankMonitor';

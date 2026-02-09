@@ -9,7 +9,7 @@ const Checkout = lazy(() => import('./pages/Checkout'));
 const Auth = lazy(() => import('./pages/Auth'));
 const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const AddProduct = lazy(() => import('./pages/Admin/AddProduct'));
+const AddProduct = lazy(() => import('./pages/admin_lower/AddProduct'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const OrderSuccess = lazy(() => import('./pages/OrderSuccess'));
