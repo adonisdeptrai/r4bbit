@@ -25,7 +25,8 @@ import {
     AdminOrders,
     AdminCustomers,
     AdminMessages,
-    AdminSettings
+    AdminSettings,
+    AdminAffiliates
 } from './admin_lower/views';
 
 // External admin components
@@ -267,6 +268,7 @@ export const AdminDashboard = ({ user, activeTab }: { user: User; activeTab: str
 
                 {activeTab === 'orders' && <AdminOrders onVerify={setVerifyingOrder} orders={orders} />}
                 {activeTab === 'customers' && <AdminCustomers users={users} onUpdateRole={handleUpdateUserRole} />}
+                {activeTab === 'affiliates' && <AdminAffiliates />}
                 {activeTab === 'bank' && <TPBankMonitor orders={orders} />}
                 {activeTab === 'crypto' && <BinanceMonitor />}
                 {activeTab === 'messages' && <AdminMessages />}

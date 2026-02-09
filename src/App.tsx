@@ -17,6 +17,7 @@ const OrderSuccess = lazy(() => import('./pages/OrderSuccess'));
 import { CartProvider } from './contexts/CartContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { AffiliateProvider } from './contexts/AffiliateContext';
 import { ViewState } from './types';
 import SmoothScroll from './components/layout/SmoothScroll';
 
@@ -155,6 +156,12 @@ function AppContent() {
             </AdminRoute>
           } />
 
+          <Route path="/affiliate" element={
+            <ProtectedRoute>
+              <Dashboard onNavigate={handleNavigate} initialTab="affiliate" />
+            </ProtectedRoute>
+          } />
+
           <Route path="/add-product" element={
             <AdminRoute>
               <AddProduct />
@@ -183,8 +190,10 @@ export default function App() {
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
-              <AppContent />
-              <Analytics />
+              <AffiliateProvider>
+                <AppContent />
+                <Analytics />
+              </AffiliateProvider>
             </WishlistProvider>
           </CartProvider>
         </AuthProvider>

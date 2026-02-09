@@ -10,3 +10,5 @@ export { AdminOrders } from './AdminOrders';
 export { AdminCustomers } from './AdminCustomers';
 export { AdminMessages } from './AdminMessages';
 export { AdminSettings } from './AdminSettings';
+export { AdminAffiliates } from './AdminAffiliates';
+

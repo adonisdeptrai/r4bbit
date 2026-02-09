@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutGrid, ShoppingBag, User as UserIcon, Settings, LogOut,
-  Shield, FileText, Home, PieChart, Bell, ArrowLeft, Truck, Package, Users, Megaphone, MessageSquare,
-  GraduationCap, Key, Cpu, HelpCircle, Sliders
+  FileText, Home, Bell, ArrowLeft, Package, Users, Megaphone, MessageSquare,
+  GraduationCap, Key, Cpu, Sliders, Gift
 } from 'lucide-react';
 import { ViewState } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,6 +13,7 @@ import { UserMenu } from '../components/layout/UserMenu';
 // Import distinct dashboards
 import { UserOverview, UserOrders, UserProfile, UserSettings } from './UserDashboard';
 import { AdminDashboard } from './AdminDashboard';
+import { AffiliateView } from './affiliate/AffiliateView';
 
 interface DashboardProps {
   onNavigate: (view: ViewState) => void;
@@ -96,6 +97,7 @@ const USER_NAV_GROUPS: NavGroup[] = [
     items: [
       { id: 'overview', label: 'Home', icon: Home },
       { id: 'orders', label: 'Orders', icon: FileText },
+      { id: 'affiliate', label: 'Affiliate', icon: Gift },
       { id: 'profile', label: 'Profile', icon: UserIcon },
       { id: 'settings', label: 'Settings', icon: Settings },
     ]
@@ -134,6 +136,7 @@ const ADMIN_NAV_GROUPS: NavGroup[] = [
     title: 'User Management',
     items: [
       { id: 'customers', label: 'Customers', icon: Users },
+      { id: 'affiliates', label: 'Affiliates', icon: Gift },
     ]
   },
   {
@@ -341,6 +344,7 @@ export default function Dashboard({ onNavigate, initialTab = 'overview' }: Dashb
                 <>
                   {activeTab === 'overview' && user && <UserOverview user={user} />}
                   {activeTab === 'orders' && <UserOrders />}
+                  {activeTab === 'affiliate' && <AffiliateView />}
                   {activeTab === 'profile' && user && <UserProfile user={user} />}
                   {activeTab === 'settings' && user && <UserSettings user={user} />}
                 </>
