@@ -8,7 +8,7 @@ import {
     User as UserIcon, Mail, CheckCircle, Settings
 } from 'lucide-react';
 import { User, Order, OrderStatus } from '../types';
-import { Button, Badge, cn } from '../components/common';
+import { Button, Badge, cn, StatusBadge } from '../components/common';
 import { API_ENDPOINTS } from '../config/api';
 
 // Helper to determine asset type from product name
@@ -24,29 +24,6 @@ const getAssetIcon = (type: string) => {
         case 'Key': return Key;
         default: return FileCode;
     }
-};
-
-const StatusBadge = ({ status }: { status: OrderStatus | string }) => {
-    const styles: Record<string, string> = {
-        completed: 'bg-green-50 text-green-600 border-green-100',
-        active: 'bg-green-50 text-green-600 border-green-100',
-        Active: 'bg-green-50 text-green-600 border-green-100',
-        processing: 'bg-blue-50 text-blue-600 border-blue-100',
-        Pending: 'bg-blue-50 text-blue-600 border-blue-100', // API returns Pending
-        failed: 'bg-red-50 text-red-600 border-red-100',
-        expired: 'bg-slate-100 text-slate-500 border-gray-200',
-        Expired: 'bg-slate-100 text-slate-500 border-gray-200',
-        refunded: 'bg-gray-50 text-gray-600 border-gray-100',
-        'Update Available': 'bg-amber-50 text-amber-600 border-amber-100',
-        'In Progress': 'bg-violet-50 text-violet-600 border-violet-100',
-        Paid: 'bg-green-50 text-green-600 border-green-100'
-    };
-
-    return (
-        <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold border tracking-wide", styles[status] || styles.processing)}>
-            {status}
-        </span>
-    );
 };
 
 export const UserOverview = ({ user }: { user: User }) => {
@@ -246,7 +223,7 @@ export const UserOverview = ({ user }: { user: User }) => {
                             </div>
                             <div className="text-right hidden sm:block">
                                 <div className="font-bold text-sm text-brand-dark">${order.amount}</div>
-                                <StatusBadge status={order.status} />
+                                <StatusBadge status={order.status} variant="light" />
                             </div>
                         </div>
                     ))}
@@ -304,7 +281,7 @@ export const UserOrders = () => {
                                 <div className="font-bold text-base text-brand-dark">${order.amount}</div>
                                 <div className="text-xs text-slate-400">{order.method}</div>
                             </div>
-                            <StatusBadge status={order.status} />
+                            <StatusBadge status={order.status} variant="light" />
                         </div>
                     </div>
                 )) : <div className="p-12 text-center text-slate-400">No orders found.</div>}

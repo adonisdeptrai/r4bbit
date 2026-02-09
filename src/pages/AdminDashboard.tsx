@@ -22,7 +22,7 @@ import {
     ResponsiveContainer
 } from 'recharts';
 import { User, Product, ProductType, Order } from '../types';
-import { Button, Badge, cn } from '../components/common';
+import { Button, Badge, cn, getStatusBadgeClass } from '../components/common';
 import TPBankMonitor from '../components/admin/TPBankMonitor';
 import BinanceMonitor from '../components/admin/BinanceMonitor';
 import { API_ENDPOINTS, SUPABASE_URL, API_BASE_URL } from '../config/api';
@@ -486,21 +486,6 @@ const AdminOrders = ({ onVerify, orders }: any) => {
     const safeOrders = Array.isArray(orders) ? orders : [];
     const [searchQuery, setSearchQuery] = React.useState('');
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'Completed':
-                return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-            case 'Paid':
-                return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-            case 'Pending':
-                return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-            case 'Pending Verification':
-                return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
-            default:
-                return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-        }
-    };
-
     // Filter orders based on search query
     const filteredOrders = safeOrders.filter((order: any) => {
         if (!searchQuery.trim()) return true;
@@ -598,7 +583,7 @@ const AdminOrders = ({ onVerify, orders }: any) => {
                                         </Badge>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <Badge className={cn("text-[10px] font-bold", getStatusBadge(order.status))}>
+                                        <Badge className={cn("text-[10px] font-bold", getStatusBadgeClass(order.status))}>
                                             {order.status}
                                         </Badge>
                                     </td>
