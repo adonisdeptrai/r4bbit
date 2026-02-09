@@ -37,90 +37,100 @@ export default function Auth({ onNavigate }: AuthProps) {
             </button>
 
             {/* Main Container */}
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className={`w-full ${isForgot ? 'max-w-md' : 'max-w-[420px] md:max-w-[1000px]'} mx-4 relative z-10 transition-all duration-500`}
-            >
-                {/* Glass Card */}
-                <div className={`relative backdrop-blur-3xl bg-[#0F1420]/60 rounded-[32px] border border-white/5 shadow-2xl shadow-black/50 overflow-hidden min-h-[600px] flex`}>
+            <AnimatePresence mode="wait">
+                {isForgot ? (
+                    /* Forgot Password View - Separate from Login/Register */
+                    <motion.div
+                        key="forgot-password"
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        className="w-full max-w-md mx-4 relative z-10"
+                    >
+                        {/* Glass Card for Forgot Password */}
+                        <div className="relative backdrop-blur-3xl bg-[#0F1420]/60 rounded-[32px] border border-white/5 shadow-2xl shadow-black/50 overflow-hidden">
+                            {/* Inner lighting effects */}
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50"></div>
+                            <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none rounded-[32px]"></div>
 
-                    {/* Inner lighting effects */}
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50"></div>
-                    <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none rounded-[32px]"></div>
-
-                    {/* Forgot Password Mode */}
-                    <AnimatePresence mode='wait'>
-                        {isForgot && (
-                            <motion.div
-                                className="w-full h-full absolute inset-0 bg-[#0F1420]/80 z-50 flex items-center justify-center backdrop-blur-md"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                            >
-                                <ForgotPasswordForm onBack={() => setIsForgot(false)} />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-
-                    {/* Desktop Sliding Layout - Hidden on Mobile */}
-                    <div className="hidden md:flex w-full h-full relative">
-                        {/* Sign In Container (Left) */}
-                        <div className={`w-1/2 h-full flex items-center justify-center transition-all duration-700 ${isSignUp ? 'opacity-0 pointer-events-none translate-x-full' : 'opacity-100 translate-x-0'}`}>
-                            <SignInForm
-                                onForgotPassword={() => setIsForgot(true)}
-                                onToggleMode={() => setIsSignUp(true)}
-                            />
+                            <ForgotPasswordForm onBack={() => setIsForgot(false)} />
                         </div>
+                    </motion.div>
+                ) : (
+                    /* Login/Register View */
+                    <motion.div
+                        key="auth-forms"
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        className="w-full max-w-[420px] md:max-w-[1000px] mx-4 relative z-10"
+                    >
+                        {/* Glass Card */}
+                        <div className="relative backdrop-blur-3xl bg-[#0F1420]/60 rounded-[32px] border border-white/5 shadow-2xl shadow-black/50 overflow-hidden min-h-[600px] flex">
 
-                        {/* Sign Up Container (Right) */}
-                        <div className={`w-1/2 h-full flex items-center justify-center transition-all duration-700 absolute right-0 top-0 h-full ${isSignUp ? 'opacity-100 translate-x-0' : 'opacity-0 pointer-events-none -translate-x-full'}`}>
-                            <SignUpForm
-                                onToggleMode={() => setIsSignUp(false)}
-                            />
+                            {/* Inner lighting effects */}
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50"></div>
+                            <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none rounded-[32px]"></div>
+
+                            {/* Desktop Sliding Layout - Hidden on Mobile */}
+                            <div className="hidden md:flex w-full h-full relative">
+                                {/* Sign In Container (Left) */}
+                                <div className={`w-1/2 h-full flex items-center justify-center transition-all duration-700 ${isSignUp ? 'opacity-0 pointer-events-none translate-x-full' : 'opacity-100 translate-x-0'}`}>
+                                    <SignInForm
+                                        onForgotPassword={() => setIsForgot(true)}
+                                        onToggleMode={() => setIsSignUp(true)}
+                                    />
+                                </div>
+
+                                {/* Sign Up Container (Right) */}
+                                <div className={`w-1/2 h-full flex items-center justify-center transition-all duration-700 absolute right-0 top-0 ${isSignUp ? 'opacity-100 translate-x-0' : 'opacity-0 pointer-events-none -translate-x-full'}`}>
+                                    <SignUpForm
+                                        onToggleMode={() => setIsSignUp(false)}
+                                    />
+                                </div>
+
+                                {/* Overlay Panel (The Moving Part) */}
+                                <OverlayPanel isSignUp={isSignUp} onToggle={setIsSignUp} />
+                            </div>
+
+                            {/* Mobile Layout - Switcher */}
+                            <div className="md:hidden w-full flex items-center justify-center">
+                                <AnimatePresence mode='wait'>
+                                    {!isSignUp ? (
+                                        <motion.div
+                                            key="signin"
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                            className="w-full"
+                                        >
+                                            <SignInForm
+                                                onForgotPassword={() => setIsForgot(true)}
+                                                onToggleMode={() => setIsSignUp(true)}
+                                            />
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="signup"
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            className="w-full"
+                                        >
+                                            <SignUpForm
+                                                onToggleMode={() => setIsSignUp(false)}
+                                            />
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
                         </div>
-
-                        {/* Overlay Panel (The Moving Part) */}
-                        <OverlayPanel isSignUp={isSignUp} onToggle={setIsSignUp} />
-                    </div>
-
-                    {/* Mobile Layout - Switcher */}
-                    <div className="md:hidden w-full flex items-center justify-center">
-                        <AnimatePresence mode='wait'>
-                            {!isForgot && (
-                                !isSignUp ? (
-                                    <motion.div
-                                        key="signin"
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 20 }}
-                                        className="w-full"
-                                    >
-                                        <SignInForm
-                                            onForgotPassword={() => setIsForgot(true)}
-                                            onToggleMode={() => setIsSignUp(true)}
-                                        />
-                                    </motion.div>
-                                ) : (
-                                    <motion.div
-                                        key="signup"
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
-                                        className="w-full"
-                                    >
-                                        <SignUpForm
-                                            onToggleMode={() => setIsSignUp(false)}
-                                        />
-                                    </motion.div>
-                                )
-                            )}
-                        </AnimatePresence>
-                    </div>
-
-                </div>
-            </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
