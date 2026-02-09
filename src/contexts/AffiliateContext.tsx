@@ -11,6 +11,31 @@ import {
 
 const REFERRAL_CODE_KEY = 'r4bbit_referral_code';
 
+// Database row types for Supabase
+interface DbAffiliateTier {
+    id: number;
+    name: string;
+    display_name: string;
+    display_name_vi: string | null;
+    commission_rate: string;
+    min_referrals: number;
+    min_deposit: string;
+    icon: string;
+    color: string;
+    sort_order: number;
+}
+
+interface DbAffiliateStats {
+    tier: AffiliateTierConfig;
+    nextTier: AffiliateTierConfig | null;
+    referralCode: string;
+    totalReferrals: number;
+    activeReferrals: number;
+    totalEarnings: string;
+    pendingEarnings: string;
+    progressToNextTier: string;
+}
+
 interface AffiliateContextType {
     stats: AffiliateStats | null;
     referrals: Referral[];
@@ -63,12 +88,14 @@ export const AffiliateProvider: React.FC<{ children: ReactNode }> = ({ children 
                     .order('sort_order');
 
                 if (error) throw error;
-                if (data && data.length > 0) {
-                    setTiers(data.map(t => ({
+
+                const tiersData = data as DbAffiliateTier[] | null;
+                if (tiersData && tiersData.length > 0) {
+                    setTiers(tiersData.map((t: DbAffiliateTier) => ({
                         id: t.id,
-                        name: t.name,
+                        name: t.name as AffiliateTierConfig['name'],
                         displayName: t.display_name,
-                        displayNameVi: t.display_name_vi,
+                        displayNameVi: t.display_name_vi || t.display_name,
                         commissionRate: parseFloat(t.commission_rate),
                         minReferrals: t.min_referrals,
                         minDeposit: parseFloat(t.min_deposit),
@@ -101,16 +128,17 @@ export const AffiliateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
             if (statsError) throw statsError;
 
-            if (statsData) {
+            const typedStats = statsData as DbAffiliateStats | null;
+            if (typedStats) {
                 setStats({
-                    tier: statsData.tier,
-                    referralCode: statsData.referralCode,
-                    totalReferrals: statsData.totalReferrals || 0,
-                    activeReferrals: statsData.activeReferrals || 0,
-                    totalEarnings: parseFloat(statsData.totalEarnings) || 0,
-                    pendingEarnings: parseFloat(statsData.pendingEarnings) || 0,
-                    nextTier: statsData.nextTier,
-                    progressToNextTier: parseFloat(statsData.progressToNextTier) || 0
+                    tier: typedStats.tier,
+                    referralCode: typedStats.referralCode,
+                    totalReferrals: typedStats.totalReferrals || 0,
+                    activeReferrals: typedStats.activeReferrals || 0,
+                    totalEarnings: parseFloat(typedStats.totalEarnings) || 0,
+                    pendingEarnings: parseFloat(typedStats.pendingEarnings) || 0,
+                    nextTier: typedStats.nextTier,
+                    progressToNextTier: parseFloat(typedStats.progressToNextTier) || 0
                 });
             }
 
@@ -129,7 +157,7 @@ export const AffiliateProvider: React.FC<{ children: ReactNode }> = ({ children 
                 .order('created_at', { ascending: false });
 
             if (referralsData) {
-                setReferrals(referralsData.map((r: any) => ({
+                setReferrals((referralsData as any[]).map((r) => ({
                     id: r.id,
                     referredUser: {
                         id: r.referred?.id,
@@ -153,7 +181,7 @@ export const AffiliateProvider: React.FC<{ children: ReactNode }> = ({ children 
                 .limit(20);
 
             if (commissionsData) {
-                setCommissions(commissionsData.map((c: any) => ({
+                setCommissions((commissionsData as any[]).map((c) => ({
                     id: c.id,
                     orderId: c.order_id,
                     amount: parseFloat(c.amount),
