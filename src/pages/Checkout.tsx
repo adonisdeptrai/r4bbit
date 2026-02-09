@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -71,6 +71,20 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationTime, setVerificationTime] = useState(0); // seconds passed
   const [remainingTime, setRemainingTime] = useState(15 * 60); // Remaining seconds (15 mins)
+
+  // Refs for cleanup - prevents memory leaks
+  const pollingCancelledRef = useRef(false);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup effect for polling
+  useEffect(() => {
+    return () => {
+      pollingCancelledRef.current = true;
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Real-time countdown timer (updates every 1s)
   React.useEffect(() => {
@@ -172,13 +186,18 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
   const handleBankVerification = async () => {
     setIsVerifying(true);
     setError(null);
+    pollingCancelledRef.current = false; // Reset on start
 
     const startTime = Date.now();
     const MAX_DURATION = 15 * 60 * 1000; // 15 minutes
     const POLL_INTERVAL = 10000; // 10 seconds
 
     const poll = async () => {
-      // Check if component unmounted or verification cancelled? (Not easily done in closure without ref, but good enough)
+      // Check if cancelled (component unmounted or user cancelled)
+      if (pollingCancelledRef.current) {
+        return;
+      }
+
       if (Date.now() - startTime > MAX_DURATION) {
         setIsVerifying(false);
         setError("Transaction cancelled: Verification timed out (15m).");
@@ -208,7 +227,6 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
 
         if (data.verified) {
           // Success! Stop polling first
-          // await completeOrder('Bank Transfer'); -> Do this safely
           try {
             await completeOrder('Bank Transfer');
             return;
@@ -219,13 +237,17 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
             return;
           }
         } else {
-          // Retry
-          setTimeout(poll, POLL_INTERVAL);
+          // Retry with ref tracking
+          if (!pollingCancelledRef.current) {
+            pollingTimeoutRef.current = setTimeout(poll, POLL_INTERVAL);
+          }
         }
 
       } catch (err) {
         console.error("Verification check failed", err);
-        setTimeout(poll, POLL_INTERVAL);
+        if (!pollingCancelledRef.current) {
+          pollingTimeoutRef.current = setTimeout(poll, POLL_INTERVAL);
+        }
       }
     };
 
@@ -236,6 +258,7 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
     setIsVerifying(true);
     setBinanceLoading(true);
     setError(null);
+    pollingCancelledRef.current = false; // Reset on start
 
     const token = localStorage.getItem('token');
 
@@ -265,6 +288,11 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
       const startTime = Date.now();
 
       const pollBinance = async () => {
+        // Check if cancelled (component unmounted)
+        if (pollingCancelledRef.current) {
+          return;
+        }
+
         if (Date.now() - startTime > 15 * 60 * 1000) { // 15 mins timeout
           setIsVerifying(false);
           setError("Payment timed out.");
@@ -280,11 +308,15 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
           if (statusData.data.status === 'PAID') {
             await completeOrder('Binance Pay (Auto)');
           } else {
-            setTimeout(pollBinance, POLLING_INTERVAL);
+            if (!pollingCancelledRef.current) {
+              pollingTimeoutRef.current = setTimeout(pollBinance, POLLING_INTERVAL);
+            }
           }
         } catch (e) {
           console.error("Binance Poll Error", e);
-          setTimeout(pollBinance, POLLING_INTERVAL);
+          if (!pollingCancelledRef.current) {
+            pollingTimeoutRef.current = setTimeout(pollBinance, POLLING_INTERVAL);
+          }
         }
       };
 
