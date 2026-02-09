@@ -25,7 +25,8 @@ import { User, Product, ProductType, Order } from '../types';
 import { Button, Badge, cn } from '../components/common';
 import TPBankMonitor from '../components/admin/TPBankMonitor';
 import BinanceMonitor from '../components/admin/BinanceMonitor';
-import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
+import { API_ENDPOINTS, SUPABASE_URL, API_BASE_URL } from '../config/api';
+import { ProductsAPI, OrdersAPI, UsersAPI } from '../config/supabaseApi';
 // import { PRODUCTS } from '../utils/constants';
 
 // --- Types & Mock Data ---
@@ -1986,49 +1987,26 @@ export const AdminDashboard = ({ user, activeTab }: { user: User; activeTab: str
     const [products, setProducts] = useState<Product[]>([]);
     const [users, setUsers] = useState<User[]>([]);
 
-    // Fetch Data on Mount
-    // Fetch Data on Mount
+    // Fetch Data on Mount using supabaseApi
     React.useEffect(() => {
         const fetchData = async () => {
             try {
-                const token = localStorage.getItem('token');
-
-                if (!token) {
-                    console.error("AdminDashboard: No token found in localStorage");
-                    return;
-                }
-
-                const headers = {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                };
-
-                // Fetch Products
+                // Fetch Products via supabaseApi
                 try {
-                    const prodRes = await fetch(API_ENDPOINTS.PRODUCTS);
-                    if (prodRes.ok) setProducts(await prodRes.json());
+                    const productsData = await ProductsAPI.getAll();
+                    setProducts(productsData);
                 } catch (e) { console.error("Failed to fetch products", e); }
 
-                // Fetch Orders (Admin only - needs auth)
+                // Fetch Orders via supabaseApi
                 try {
-                    const ordRes = await fetch(API_ENDPOINTS.ORDERS, { headers });
-                    if (ordRes.ok) {
-                        const data = await ordRes.json();
-                        setOrders(Array.isArray(data) ? data : []);
-                    } else if (ordRes.status === 401) {
-                        console.error("AdminDashboard: 401 Unauthorized fetching Orders");
-                    }
+                    const ordersData = await OrdersAPI.getAll();
+                    setOrders(ordersData);
                 } catch (e) { console.error("Failed to fetch orders", e); }
 
-                // Fetch Users
+                // Fetch Users via supabaseApi
                 try {
-                    const userRes = await fetch(API_ENDPOINTS.USERS, { headers });
-                    if (userRes.ok) {
-                        const data = await userRes.json();
-                        setUsers(Array.isArray(data) ? data : []);
-                    } else {
-                        console.error("AdminDashboard: Failed to fetch users", userRes.status);
-                    }
+                    const usersData = await UsersAPI.getAll();
+                    setUsers(usersData);
                 } catch (e) { console.error("Failed to fetch users", e); }
 
             } catch (error) {
