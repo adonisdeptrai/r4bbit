@@ -20,7 +20,7 @@ interface CheckoutProps {
   onNavigate: (view: ViewState) => void;
 }
 
-type PaymentMethod = 'CRYPTO' | 'BANK' | 'BINANCE_PAY';
+type PaymentMethod = 'CRYPTO' | 'BANK';
 
 export default function Checkout({ onNavigate }: CheckoutProps) {
   const navigate = useNavigate();
@@ -31,8 +31,7 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
   const [settings, setSettings] = useState<any>({
     bank: { bankId: '', accountNo: '', accountName: '' },
     exchangeRate: 25000,
-    crypto: { enabled: false, networks: [] },
-    binance: { apiKey: '' } // Just checking existence
+    crypto: { enabled: false, networks: [] }
   });
 
   React.useEffect(() => {
@@ -58,10 +57,6 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
     }
     return `R4B ${result}`;
   });
-
-  // Binance Pay State
-  const [binanceOrder, setBinanceOrder] = useState<any>(null);
-  const [binanceLoading, setBinanceLoading] = useState(false);
 
   // Note: We are using a dedicated OrderSuccess page now, so 'step' state is just for loading/processing
   const [isLoading, setIsLoading] = useState(false);
@@ -211,7 +206,7 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
         const expectedVND = Math.round(checkoutTotal * settings.exchangeRate);
         const token = localStorage.getItem('token');
 
-        const res = await fetch(API_ENDPOINTS.AUTH_VERIFY_PAYMENT, {
+        const res = await fetch(API_ENDPOINTS.VERIFY_PAYMENT, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -252,82 +247,6 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
     };
 
     poll();
-  };
-
-  const handleCreateBinanceOrder = async () => {
-    setIsVerifying(true);
-    setBinanceLoading(true);
-    setError(null);
-    pollingCancelledRef.current = false; // Reset on start
-
-    const token = localStorage.getItem('token');
-
-    try {
-      // 1. Create Order
-      const res = await fetch(API_ENDPOINTS.PAYMENT_BINANCE_CREATE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token || ''}`
-        },
-        body: JSON.stringify({
-          amount: checkoutTotal,
-          productName: checkoutItems.map(i => i.title).join(', ')
-        })
-      });
-
-      const data = await res.json();
-
-      if (!data.success) throw new Error(data.message);
-
-      setBinanceOrder(data.data);
-      setBinanceLoading(false);
-
-      // 2. Start Polling
-      const POLLING_INTERVAL = 5000;
-      const startTime = Date.now();
-
-      const pollBinance = async () => {
-        // Check if cancelled (component unmounted)
-        if (pollingCancelledRef.current) {
-          return;
-        }
-
-        if (Date.now() - startTime > 15 * 60 * 1000) { // 15 mins timeout
-          setIsVerifying(false);
-          setError("Payment timed out.");
-          return;
-        }
-
-        try {
-          const statusRes = await fetch(API_ENDPOINTS.PAYMENT_BINANCE_QUERY(data.data.orderId), {
-            headers: { 'Authorization': `Bearer ${token || ''}` }
-          });
-          const statusData = await statusRes.json();
-
-          if (statusData.data.status === 'PAID') {
-            await completeOrder('Binance Pay (Auto)');
-          } else {
-            if (!pollingCancelledRef.current) {
-              pollingTimeoutRef.current = setTimeout(pollBinance, POLLING_INTERVAL);
-            }
-          }
-        } catch (e) {
-          console.error("Binance Poll Error", e);
-          if (!pollingCancelledRef.current) {
-            pollingTimeoutRef.current = setTimeout(pollBinance, POLLING_INTERVAL);
-          }
-        }
-      };
-
-      pollBinance();
-
-    } catch (err: any) {
-      console.error(err);
-      setBinanceLoading(false);
-      setIsVerifying(false);
-      setError(err.message || 'Failed to initialize Binance Pay');
-    }
   };
 
   const handleConfirmPayment = async () => {
@@ -502,29 +421,6 @@ export default function Checkout({ onNavigate }: CheckoutProps) {
                   </div>
                 </button>
               </div>
-
-              {/* Binance Pay Option */}
-              <button
-                onClick={() => setPaymentMethod('BINANCE_PAY')}
-                className={cn(
-                  "relative flex items-center p-4 rounded-2xl border transition-all duration-300 text-left bg-[#020617]/50 group mt-4",
-                  paymentMethod === 'BINANCE_PAY'
-                    ? "border-[#F3BA2F] ring-1 ring-[#F3BA2F]/50 shadow-[0_0_20px_rgba(243,186,47,0.1)] bg-[#F3BA2F]/5"
-                    : "border-white/5 hover:border-white/20 text-slate-400 hover:bg-white/5"
-                )}
-              >
-                <div className={cn("w-12 h-12 rounded-xl mr-4 flex items-center justify-center transition-colors shrink-0", paymentMethod === 'BINANCE_PAY' ? "bg-[#F3BA2F]/20 text-[#F3BA2F]" : "bg-black/40 text-slate-500")}>
-                  <ScanLine size={24} />
-                </div>
-                <div>
-                  <span className={cn("block font-bold text-sm md:text-base transition-colors", paymentMethod === 'BINANCE_PAY' ? "text-white" : "text-slate-400 group-hover:text-white")}>Binance Pay</span>
-                  <span className="text-xs text-slate-500 font-mono">Auto Confirmation (Recommended)</span>
-                </div>
-                {/* Recommended Badge */}
-                <div className="absolute top-4 right-4">
-                  <Badge className="bg-[#F3BA2F]/20 text-[#F3BA2F] border-[#F3BA2F]/30 text-[10px]">FASTEST</Badge>
-                </div>
-              </button>
             </div>
 
             {/* Details Area */}
