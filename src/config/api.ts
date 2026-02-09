@@ -1,48 +1,52 @@
-// API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+/**
+ * API Configuration - Supabase Only
+ * All backend operations now use Supabase Edge Functions
+ */
 
-// API Endpoints
+// Supabase Project URL
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://okalizcwyzpwaffrkbey.supabase.co';
+
+// Edge Functions base URL
+export const EDGE_FUNCTIONS_URL = `${SUPABASE_URL}/functions/v1`;
+
+// Legacy API Base URL (for backward compatibility during migration)
+export const API_BASE_URL = import.meta.env.VITE_API_URL || SUPABASE_URL;
+
+// API Endpoints - Now using Supabase Edge Functions
 export const API_ENDPOINTS = {
-    // Auth
-    AUTH_RESET_PASSWORD: (token: string) => `${API_BASE_URL}/api/auth/reset-password/${token}`,
-    AUTH_VERIFY_PAYMENT: `${API_BASE_URL}/api/auth/verify-payment`,
+    // Payment Edge Functions
+    VERIFY_PAYMENT: `${EDGE_FUNCTIONS_URL}/verify-payment`,
+    BINANCE_PAY_CREATE: `${EDGE_FUNCTIONS_URL}/binance-pay/create`,
+    BINANCE_PAY_QUERY: `${EDGE_FUNCTIONS_URL}/binance-pay/query`,
+    FILE_UPLOAD: `${EDGE_FUNCTIONS_URL}/file-upload`,
 
-    // Products
-    PRODUCTS: `${API_BASE_URL}/api/products`,
-    PRODUCT_BY_ID: (id: string) => `${API_BASE_URL}/api/products/${id}`,
+    // Legacy endpoints (kept for reference, should migrate to supabaseApi.ts)
+    // Products - use ProductsAPI from supabaseApi.ts
+    // Orders - use OrdersAPI from supabaseApi.ts  
+    // Users - use UsersAPI from supabaseApi.ts
+    // Settings - use SettingsAPI from supabaseApi.ts
 
-    // Orders
-    ORDERS: `${API_BASE_URL}/api/orders`,
-    ORDERS_MY: `${API_BASE_URL}/api/orders/my-orders`,
-    ORDERS_PENDING: `${API_BASE_URL}/api/orders/pending`,
-    ORDER_BY_ID: (id: string) => `${API_BASE_URL}/api/orders/${id}`,
-    ORDER_VERIFY: (id: string) => `${API_BASE_URL}/api/orders/${id}/verify`,
-    ORDER_MANUAL_VERIFY: (id: string) => `${API_BASE_URL}/api/orders/${id}/manual-verify`,
-
-    // Settings
-    SETTINGS: `${API_BASE_URL}/api/settings`,
-    SETTINGS_TEST_TPBANK: `${API_BASE_URL}/api/settings/test-tpbank`,
-    SETTINGS_TEST_BINANCE: `${API_BASE_URL}/api/settings/test-binance`,
-    SETTINGS_TPBANK_HISTORY: `${API_BASE_URL}/api/settings/tpbank-history`,
-    SETTINGS_TPBANK_LOGS: `${API_BASE_URL}/api/settings/tpbank-logs`,
-    SETTINGS_BINANCE_HISTORY: `${API_BASE_URL}/api/settings/binance-history`,
-
-    // Users
-    USERS: `${API_BASE_URL}/api/users`,
-    USER_BY_ID: (id: string) => `${API_BASE_URL}/api/users/${id}`,
-
-    // Stats
-    STATS_OVERVIEW: `${API_BASE_URL}/api/stats/overview`,
-
-    // Upload
-    UPLOAD: `${API_BASE_URL}/api/upload`,
-
-    // Payment
-    PAYMENT_BINANCE_CREATE: `${API_BASE_URL}/api/payment/binance/create`,
-    PAYMENT_BINANCE_QUERY: (orderId: string) => `${API_BASE_URL}/api/payment/binance/query/${orderId}`,
-
-    // Static Assets
-    UPLOADS: (path: string) => `${API_BASE_URL}${path}`,
+    // Supabase Storage for static assets
+    STORAGE_URL: `${SUPABASE_URL}/storage/v1/object/public`,
+    PRODUCT_IMAGE: (path: string) => `${SUPABASE_URL}/storage/v1/object/public/product-images/${path}`,
+    AVATAR: (path: string) => `${SUPABASE_URL}/storage/v1/object/public/avatars/${path}`,
 } as const;
+
+// Helper to call Edge Functions with auth
+export async function callEdgeFunction(
+    endpoint: string,
+    options: RequestInit = {}
+): Promise<Response> {
+    const token = localStorage.getItem('token');
+
+    return fetch(endpoint, {
+        ...options,
+        headers: {
+            ...options.headers,
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+    });
+}
 
 export default API_BASE_URL;
