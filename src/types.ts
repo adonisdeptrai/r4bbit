@@ -67,7 +67,7 @@ export interface Order {
   product?: string; // Added for compatibility 
 }
 
-export type UserRole = 'user' | 'admin';
+export type UserRole = 'user' | 'admin' | 'seller';
 
 export interface User {
   id: string;
